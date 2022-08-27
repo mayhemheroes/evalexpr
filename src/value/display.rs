@@ -2,7 +2,7 @@ use std::fmt::{Display, Error, Formatter};
 
 use crate::Value;
 
-impl Display for Value {
+impl<IntType: Display, FloatType: Display> Display for Value<IntType, FloatType> {
     fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
         match self {
             Value::String(string) => write!(f, "\"{}\"", string),

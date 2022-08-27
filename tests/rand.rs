@@ -3,7 +3,7 @@
 use evalexpr::*;
 
 fn assert_expr(expr: &str) {
-    assert_eq!(eval(expr), Ok(Value::Boolean(true)))
+    assert_eq!(eval::<i64, f64>(expr), Ok(Value::Boolean(true)))
 }
 
 #[test]
@@ -18,6 +18,6 @@ fn test_random() {
 
 #[test]
 fn test_random_errors() {
-    assert!(eval("random(9)").is_err());
-    assert!(eval("random(\"a\", \"b\")").is_err());
+    assert!(eval::<i64, f64>("random(9)").is_err());
+    assert!(eval::<i64, f64>("random(\"a\", \"b\")").is_err());
 }

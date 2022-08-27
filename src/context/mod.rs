@@ -15,27 +15,27 @@ use crate::{
 mod predefined;
 
 /// An immutable context.
-pub trait Context {
+pub trait Context<IntType, FloatType> {
     /// Returns the value that is linked to the given identifier.
-    fn get_value(&self, identifier: &str) -> Option<&Value>;
+    fn get_value(&self, identifier: &str) -> Option<&Value<IntType, FloatType>>;
 
     /// Calls the function that is linked to the given identifier with the given argument.
     /// If no function with the given identifier is found, this method returns `EvalexprError::FunctionIdentifierNotFound`.
-    fn call_function(&self, identifier: &str, argument: &Value) -> EvalexprResult<Value>;
+    fn call_function(&self, identifier: &str, argument: &Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType>;
 }
 
 /// A context that allows to assign to variables.
-pub trait ContextWithMutableVariables: Context {
+pub trait ContextWithMutableVariables<IntType, FloatType>: Context<IntType, FloatType> {
     /// Sets the variable with the given identifier to the given value.
-    fn set_value(&mut self, _identifier: String, _value: Value) -> EvalexprResult<()> {
+    fn set_value(&mut self, _identifier: String, _value: Value<IntType, FloatType>) -> EvalexprResult<(), IntType, FloatType> {
         Err(EvalexprError::ContextNotMutable)
     }
 }
 
 /// A context that allows to assign to function identifiers.
-pub trait ContextWithMutableFunctions: Context {
+pub trait ContextWithMutableFunctions<IntType, FloatType>: Context<IntType, FloatType> {
     /// Sets the function with the given identifier to the given function.
-    fn set_function(&mut self, _identifier: String, _function: Function) -> EvalexprResult<()> {
+    fn set_function(&mut self, _identifier: String, _function: Function<IntType, FloatType>) -> EvalexprResult<(), IntType, FloatType> {
         Err(EvalexprError::ContextNotMutable)
     }
 }
@@ -43,9 +43,9 @@ pub trait ContextWithMutableFunctions: Context {
 /// A context that allows to iterate over its variable names with their values.
 ///
 /// **Note:** this trait will change after GATs are stabilised, because then we can get rid of the lifetime in the trait definition.
-pub trait IterateVariablesContext<'a> {
+pub trait IterateVariablesContext<'a, IntType, FloatType> {
     /// The iterator type for iterating over variable name-value pairs.
-    type VariableIterator: 'a + Iterator<Item = (String, Value)>;
+    type VariableIterator: 'a + Iterator<Item = (String, Value<IntType, FloatType>)>;
     /// The iterator type for iterating over variable names.
     type VariableNameIterator: 'a + Iterator<Item = String>;
 
@@ -69,20 +69,20 @@ pub trait GetFunctionContext: Context {
 #[derive(Debug, Default)]
 pub struct EmptyContext;
 
-impl Context for EmptyContext {
-    fn get_value(&self, _identifier: &str) -> Option<&Value> {
+impl<IntType, FloatType> Context<IntType, FloatType> for EmptyContext {
+    fn get_value(&self, _identifier: &str) -> Option<&Value<IntType, FloatType>> {
         None
     }
 
-    fn call_function(&self, identifier: &str, _argument: &Value) -> EvalexprResult<Value> {
+    fn call_function(&self, identifier: &str, _argument: &Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
         Err(EvalexprError::FunctionIdentifierNotFound(
             identifier.to_string(),
         ))
     }
 }
 
-impl<'a> IterateVariablesContext<'a> for EmptyContext {
-    type VariableIterator = iter::Empty<(String, Value)>;
+impl<'a, IntType: 'a, FloatType: 'a> IterateVariablesContext<'a, IntType, FloatType> for EmptyContext {
+    type VariableIterator = iter::Empty<(String, Value<IntType, FloatType>)>;
     type VariableNameIterator = iter::Empty<String>;
 
     fn iter_variables(&self) -> Self::VariableIterator {
@@ -99,27 +99,36 @@ impl<'a> IterateVariablesContext<'a> for EmptyContext {
 /// *Value and function mappings are stored independently, meaning that there can be a function and a value with the same identifier.*
 ///
 /// This context is type-safe, meaning that an identifier that is assigned a value of some type once cannot be assigned a value of another type.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde_support", derive(Serialize, Deserialize))]
-pub struct HashMapContext {
-    variables: HashMap<String, Value>,
+pub struct HashMapContext<IntType: 'static = i64, FloatType: 'static = f64> {
+    variables: HashMap<String, Value<IntType, FloatType>>,
     #[cfg_attr(feature = "serde_support", serde(skip))]
-    functions: HashMap<String, Function>,
+    functions: HashMap<String, Function<IntType, FloatType>>,
 }
 
-impl HashMapContext {
+impl<IntType, FloatType> HashMapContext<IntType, FloatType> {
     /// Constructs a `HashMapContext` with no mappings.
     pub fn new() -> Self {
         Default::default()
     }
 }
 
-impl Context for HashMapContext {
-    fn get_value(&self, identifier: &str) -> Option<&Value> {
+impl<IntType, FloatType> Default for HashMapContext<IntType, FloatType> {
+    fn default() -> Self {
+        Self {
+            variables: Default::default(),
+            functions: Default::default(),
+        }
+    }
+}
+
+impl<IntType, FloatType> Context<IntType, FloatType> for HashMapContext<IntType, FloatType> {
+    fn get_value(&self, identifier: &str) -> Option<&Value<IntType, FloatType>> {
         self.variables.get(identifier)
     }
 
-    fn call_function(&self, identifier: &str, argument: &Value) -> EvalexprResult<Value> {
+    fn call_function(&self, identifier: &str, argument: &Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
         if let Some(function) = self.functions.get(identifier) {
             function.call(argument)
         } else {
@@ -130,10 +139,10 @@ impl Context for HashMapContext {
     }
 }
 
-impl ContextWithMutableVariables for HashMapContext {
-    fn set_value(&mut self, identifier: String, value: Value) -> EvalexprResult<()> {
+impl<IntType, FloatType> ContextWithMutableVariables<IntType, FloatType> for HashMapContext<IntType, FloatType> {
+    fn set_value(&mut self, identifier: String, value: Value<IntType, FloatType>) -> EvalexprResult<(), IntType, FloatType> {
         if let Some(existing_value) = self.variables.get_mut(&identifier) {
-            if ValueType::from(&existing_value) == ValueType::from(&value) {
+            if ValueType::from(&*existing_value) == ValueType::from(&value) {
                 *existing_value = value;
                 return Ok(());
             } else {
@@ -147,20 +156,20 @@ impl ContextWithMutableVariables for HashMapContext {
     }
 }
 
-impl ContextWithMutableFunctions for HashMapContext {
-    fn set_function(&mut self, identifier: String, function: Function) -> EvalexprResult<()> {
+impl<IntType, FloatType> ContextWithMutableFunctions<IntType, FloatType> for HashMapContext<IntType, FloatType> {
+    fn set_function(&mut self, identifier: String, function: Function<IntType, FloatType>) -> EvalexprResult<(), IntType, FloatType> {
         self.functions.insert(identifier, function);
         Ok(())
     }
 }
 
-impl<'a> IterateVariablesContext<'a> for HashMapContext {
+impl<'a, IntType: 'a + Clone, FloatType: 'a + Clone> IterateVariablesContext<'a, IntType, FloatType> for HashMapContext<IntType, FloatType> {
     type VariableIterator = std::iter::Map<
-        std::collections::hash_map::Iter<'a, String, Value>,
-        fn((&String, &Value)) -> (String, Value),
+        std::collections::hash_map::Iter<'a, String, Value<IntType, FloatType>>,
+        fn((&String, &Value<IntType, FloatType>)) -> (String, Value<IntType, FloatType>),
     >;
     type VariableNameIterator =
-        std::iter::Cloned<std::collections::hash_map::Keys<'a, String, Value>>;
+        std::iter::Cloned<std::collections::hash_map::Keys<'a, String, Value<IntType, FloatType>>>;
 
     fn iter_variables(&'a self) -> Self::VariableIterator {
         self.variables

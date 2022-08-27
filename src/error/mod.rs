@@ -5,6 +5,7 @@
 //! The module also contains some helper functions starting with `expect_` that check for a condition and return `Err(_)` if the condition is not fulfilled.
 //! They are meant as shortcuts to not write the same error checking code everywhere.
 
+use std::fmt::{Debug, Display};
 use crate::{token::PartialToken, value::value_type::ValueType};
 
 use crate::{operator::Operator, value::Value};
@@ -16,7 +17,7 @@ mod display;
 /// Errors used in this crate.
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
-pub enum EvalexprError {
+pub enum EvalexprError<IntType = i64, FloatType = f64> {
     /// An operator was called with a wrong amount of arguments.
     WrongOperatorArgumentAmount {
         /// The expected amount of arguments.
@@ -36,45 +37,45 @@ pub enum EvalexprError {
     /// A string value was expected.
     ExpectedString {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// An integer value was expected.
     ExpectedInt {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// A float value was expected.
     ExpectedFloat {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// A numeric value was expected.
     /// Numeric values are the variants `Value::Int` and `Value::Float`.
     ExpectedNumber {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// A numeric or string value was expected.
     /// Numeric values are the variants `Value::Int` and `Value::Float`.
     ExpectedNumberOrString {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// A boolean value was expected.
     ExpectedBoolean {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// A tuple value was expected.
     ExpectedTuple {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// A tuple value of a certain length was expected.
@@ -82,13 +83,13 @@ pub enum EvalexprError {
         /// The expected len
         expected_len: usize,
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// An empty value was expected.
     ExpectedEmpty {
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// Tried to append a child to a leaf node.
@@ -112,13 +113,13 @@ pub enum EvalexprError {
         /// The expected types.
         expected: Vec<ValueType>,
         /// The actual value.
-        actual: Value,
+        actual: Value<IntType, FloatType>,
     },
 
     /// An operator is used with a wrong combination of types.
     WrongTypeCombination {
         /// The operator that whose evaluation caused the error.
-        operator: Operator,
+        operator: Operator<IntType, FloatType>,
         /// The types that were used in the operator causing it to fail.
         actual: Vec<ValueType>,
     },
@@ -138,55 +139,55 @@ pub enum EvalexprError {
     /// It is not a token, but it is part of the string representation of some tokens.
     UnmatchedPartialToken {
         /// The unmatched partial token.
-        first: PartialToken,
+        first: PartialToken<IntType, FloatType>,
         /// The token that follows the unmatched partial token and that cannot be matched to the partial token, or `None`, if `first` is the last partial token in the stream.
-        second: Option<PartialToken>,
+        second: Option<PartialToken<IntType, FloatType>>,
     },
 
     /// An addition operation performed by Rust failed.
     AdditionError {
         /// The first argument of the addition.
-        augend: Value,
+        augend: Value<IntType, FloatType>,
         /// The second argument of the addition.
-        addend: Value,
+        addend: Value<IntType, FloatType>,
     },
 
     /// A subtraction operation performed by Rust failed.
     SubtractionError {
         /// The first argument of the subtraction.
-        minuend: Value,
+        minuend: Value<IntType, FloatType>,
         /// The second argument of the subtraction.
-        subtrahend: Value,
+        subtrahend: Value<IntType, FloatType>,
     },
 
     /// A negation operation performed by Rust failed.
     NegationError {
         /// The argument of the negation.
-        argument: Value,
+        argument: Value<IntType, FloatType>,
     },
 
     /// A multiplication operation performed by Rust failed.
     MultiplicationError {
         /// The first argument of the multiplication.
-        multiplicand: Value,
+        multiplicand: Value<IntType, FloatType>,
         /// The second argument of the multiplication.
-        multiplier: Value,
+        multiplier: Value<IntType, FloatType>,
     },
 
     /// A division operation performed by Rust failed.
     DivisionError {
         /// The first argument of the division.
-        dividend: Value,
+        dividend: Value<IntType, FloatType>,
         /// The second argument of the division.
-        divisor: Value,
+        divisor: Value<IntType, FloatType>,
     },
 
     /// A modulation operation performed by Rust failed.
     ModulationError {
         /// The first argument of the modulation.
-        dividend: Value,
+        dividend: Value<IntType, FloatType>,
         /// The second argument of the modulation.
-        divisor: Value,
+        divisor: Value<IntType, FloatType>,
     },
 
     /// A regular expression could not be parsed
@@ -203,11 +204,17 @@ pub enum EvalexprError {
     /// An escape sequence within a string literal is illegal.
     IllegalEscapeSequence(String),
 
+    /// Either the integer or the floating point type have no minimum value, but a function would require one.
+    NoMinValue,
+
+    /// Either the integer or the floating point type have no maximum value, but a function would require one.
+    NoMaxValue,
+
     /// A custom error explained by its message.
     CustomMessage(String),
 }
 
-impl EvalexprError {
+impl<IntType, FloatType> EvalexprError<IntType, FloatType> {
     pub(crate) fn wrong_operator_argument_amount(actual: usize, expected: usize) -> Self {
         EvalexprError::WrongOperatorArgumentAmount { actual, expected }
     }
@@ -217,52 +224,52 @@ impl EvalexprError {
     }
 
     /// Constructs `EvalexprError::TypeError{actual, expected}`.
-    pub fn type_error(actual: Value, expected: Vec<ValueType>) -> Self {
+    pub fn type_error(actual: Value<IntType, FloatType>, expected: Vec<ValueType>) -> Self {
         EvalexprError::TypeError { actual, expected }
     }
 
     /// Constructs `EvalexprError::WrongTypeCombination{operator, actual}`.
-    pub fn wrong_type_combination(operator: Operator, actual: Vec<ValueType>) -> Self {
+    pub fn wrong_type_combination(operator: Operator<IntType, FloatType>, actual: Vec<ValueType>) -> Self {
         EvalexprError::WrongTypeCombination { operator, actual }
     }
 
     /// Constructs `EvalexprError::ExpectedString{actual}`.
-    pub fn expected_string(actual: Value) -> Self {
+    pub fn expected_string(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedString { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedInt{actual}`.
-    pub fn expected_int(actual: Value) -> Self {
+    pub fn expected_int(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedInt { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedFloat{actual}`.
-    pub fn expected_float(actual: Value) -> Self {
+    pub fn expected_float(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedFloat { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedNumber{actual}`.
-    pub fn expected_number(actual: Value) -> Self {
+    pub fn expected_number(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedNumber { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedNumberOrString{actual}`.
-    pub fn expected_number_or_string(actual: Value) -> Self {
+    pub fn expected_number_or_string(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedNumberOrString { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedBoolean{actual}`.
-    pub fn expected_boolean(actual: Value) -> Self {
+    pub fn expected_boolean(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedBoolean { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedTuple{actual}`.
-    pub fn expected_tuple(actual: Value) -> Self {
+    pub fn expected_tuple(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedTuple { actual }
     }
 
     /// Constructs `EvalexprError::ExpectedFixedLenTuple{expected_len, actual}`.
-    pub fn expected_fixed_len_tuple(expected_len: usize, actual: Value) -> Self {
+    pub fn expected_fixed_len_tuple(expected_len: usize, actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedFixedLenTuple {
             expected_len,
             actual,
@@ -270,12 +277,12 @@ impl EvalexprError {
     }
 
     /// Constructs `EvalexprError::ExpectedEmpty{actual}`.
-    pub fn expected_empty(actual: Value) -> Self {
+    pub fn expected_empty(actual: Value<IntType, FloatType>) -> Self {
         EvalexprError::ExpectedEmpty { actual }
     }
 
     /// Constructs an error that expresses that the type of `expected` was expected, but `actual` was found.
-    pub(crate) fn expected_type(expected: &Value, actual: Value) -> Self {
+    pub(crate) fn expected_type(expected: &Value<IntType, FloatType>, actual: Value<IntType, FloatType>) -> Self {
         match ValueType::from(expected) {
             ValueType::String => Self::expected_string(actual),
             ValueType::Int => Self::expected_int(actual),
@@ -287,39 +294,39 @@ impl EvalexprError {
     }
 
     pub(crate) fn unmatched_partial_token(
-        first: PartialToken,
-        second: Option<PartialToken>,
+        first: PartialToken<IntType, FloatType>,
+        second: Option<PartialToken<IntType, FloatType>>,
     ) -> Self {
         EvalexprError::UnmatchedPartialToken { first, second }
     }
 
-    pub(crate) fn addition_error(augend: Value, addend: Value) -> Self {
+    pub(crate) fn addition_error(augend: Value<IntType, FloatType>, addend: Value<IntType, FloatType>) -> Self {
         EvalexprError::AdditionError { augend, addend }
     }
 
-    pub(crate) fn subtraction_error(minuend: Value, subtrahend: Value) -> Self {
+    pub(crate) fn subtraction_error(minuend: Value<IntType, FloatType>, subtrahend: Value<IntType, FloatType>) -> Self {
         EvalexprError::SubtractionError {
             minuend,
             subtrahend,
         }
     }
 
-    pub(crate) fn negation_error(argument: Value) -> Self {
+    pub(crate) fn negation_error(argument: Value<IntType, FloatType>) -> Self {
         EvalexprError::NegationError { argument }
     }
 
-    pub(crate) fn multiplication_error(multiplicand: Value, multiplier: Value) -> Self {
+    pub(crate) fn multiplication_error(multiplicand: Value<IntType, FloatType>, multiplier: Value<IntType, FloatType>) -> Self {
         EvalexprError::MultiplicationError {
             multiplicand,
             multiplier,
         }
     }
 
-    pub(crate) fn division_error(dividend: Value, divisor: Value) -> Self {
+    pub(crate) fn division_error(dividend: Value<IntType, FloatType>, divisor: Value<IntType, FloatType>) -> Self {
         EvalexprError::DivisionError { dividend, divisor }
     }
 
-    pub(crate) fn modulation_error(dividend: Value, divisor: Value) -> Self {
+    pub(crate) fn modulation_error(dividend: Value<IntType, FloatType>, divisor: Value<IntType, FloatType>) -> Self {
         EvalexprError::ModulationError { dividend, divisor }
     }
 
@@ -330,10 +337,10 @@ impl EvalexprError {
 }
 
 /// Returns `Ok(())` if the actual and expected parameters are equal, and `Err(Error::WrongOperatorArgumentAmount)` otherwise.
-pub(crate) fn expect_operator_argument_amount(
+pub(crate) fn expect_operator_argument_amount<IntType, FloatType>(
     actual: usize,
     expected: usize,
-) -> EvalexprResult<()> {
+) -> EvalexprResult<(), IntType, FloatType> {
     if actual == expected {
         Ok(())
     } else {
@@ -344,7 +351,7 @@ pub(crate) fn expect_operator_argument_amount(
 }
 
 /// Returns `Ok(())` if the actual and expected parameters are equal, and `Err(Error::WrongFunctionArgumentAmount)` otherwise.
-pub fn expect_function_argument_amount(actual: usize, expected: usize) -> EvalexprResult<()> {
+pub fn expect_function_argument_amount<IntType, FloatType>(actual: usize, expected: usize) -> EvalexprResult<(), IntType, FloatType> {
     if actual == expected {
         Ok(())
     } else {
@@ -355,46 +362,47 @@ pub fn expect_function_argument_amount(actual: usize, expected: usize) -> Evalex
 }
 
 /// Returns `Ok(())` if the given value is a string or a numeric
-pub fn expect_number_or_string(actual: &Value) -> EvalexprResult<()> {
+pub fn expect_number_or_string<IntType: Clone, FloatType: Clone>(actual: &Value<IntType, FloatType>) -> EvalexprResult<(), IntType, FloatType> {
     match actual {
         Value::String(_) | Value::Float(_) | Value::Int(_) => Ok(()),
         _ => Err(EvalexprError::expected_number_or_string(actual.clone())),
     }
 }
 
-impl std::error::Error for EvalexprError {}
+impl<IntType: Debug + Display, FloatType: Debug + Display> std::error::Error for EvalexprError<IntType, FloatType> {}
 
 /// Standard result type used by this crate.
-pub type EvalexprResult<T> = Result<T, EvalexprError>;
+pub type EvalexprResult<T, IntType, FloatType> = Result<T, EvalexprError<IntType, FloatType>>;
 
 #[cfg(test)]
 mod tests {
     use crate::{EvalexprError, Value, ValueType};
+    use crate::value::DefaultValue;
 
     /// Tests whose only use is to bring test coverage of trivial lines up, like trivial constructors.
     #[test]
     fn trivial_coverage_tests() {
         assert_eq!(
-            EvalexprError::type_error(Value::Int(3), vec![ValueType::String]),
+            EvalexprError::type_error(Value::<_, f64>::int(3), vec![ValueType::String]),
             EvalexprError::TypeError {
-                actual: Value::Int(3),
+                actual: Value::int(3),
                 expected: vec![ValueType::String]
             }
         );
         assert_eq!(
-            EvalexprError::expected_type(&Value::String("abc".to_string()), Value::Empty),
+            EvalexprError::expected_type(&DefaultValue::String("abc".to_string()), Value::Empty),
             EvalexprError::expected_string(Value::Empty)
         );
         assert_eq!(
-            EvalexprError::expected_type(&Value::Boolean(false), Value::Empty),
+            EvalexprError::expected_type(&DefaultValue::Boolean(false), Value::Empty),
             EvalexprError::expected_boolean(Value::Empty)
         );
         assert_eq!(
-            EvalexprError::expected_type(&Value::Tuple(vec![]), Value::Empty),
+            EvalexprError::expected_type(&DefaultValue::Tuple(vec![]), Value::Empty),
             EvalexprError::expected_tuple(Value::Empty)
         );
         assert_eq!(
-            EvalexprError::expected_type(&Value::Empty, Value::String("abc".to_string())),
+            EvalexprError::expected_type(&DefaultValue::Empty, Value::String("abc".to_string())),
             EvalexprError::expected_empty(Value::String("abc".to_string()))
         );
     }

@@ -5,21 +5,21 @@ use crate::{error::EvalexprResult, value::Value};
 pub(crate) mod builtin;
 
 /// A helper trait to enable cloning through `Fn` trait objects.
-trait ClonableFn
+trait ClonableFn<IntType, FloatType>
 where
-    Self: Fn(&Value) -> EvalexprResult<Value>,
+    Self: Fn(&Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType>,
     Self: Send + Sync + 'static,
 {
-    fn dyn_clone(&self) -> Box<dyn ClonableFn>;
+    fn dyn_clone(&self) -> Box<dyn ClonableFn<IntType, FloatType>>;
 }
 
-impl<F> ClonableFn for F
+impl<F, IntType, FloatType> ClonableFn<IntType, FloatType> for F
 where
-    F: Fn(&Value) -> EvalexprResult<Value>,
+    F: Fn(&Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType>,
     F: Send + Sync + 'static,
     F: Clone,
 {
-    fn dyn_clone(&self) -> Box<dyn ClonableFn> {
+    fn dyn_clone(&self) -> Box<dyn ClonableFn<IntType, FloatType>> {
         Box::new(self.clone()) as _
     }
 }
@@ -38,11 +38,11 @@ where
 /// })).unwrap(); // Do proper error handling here
 /// assert_eq!(eval_with_context("id(4)", &context), Ok(Value::from(4)));
 /// ```
-pub struct Function {
-    function: Box<dyn ClonableFn>,
+pub struct Function<IntType = i64, FloatType = f64> {
+    function: Box<dyn ClonableFn<IntType, FloatType>>,
 }
 
-impl Clone for Function {
+impl<IntType: 'static, FloatType: 'static> Clone for Function<IntType, FloatType> {
     fn clone(&self) -> Self {
         Self {
             function: self.function.dyn_clone(),
@@ -50,13 +50,13 @@ impl Clone for Function {
     }
 }
 
-impl Function {
+impl<IntType, FloatType> Function<IntType, FloatType> {
     /// Creates a user-defined function.
     ///
     /// The `function` is boxed for storage.
     pub fn new<F>(function: F) -> Self
     where
-        F: Fn(&Value) -> EvalexprResult<Value>,
+        F: Fn(&Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType>,
         F: Send + Sync + 'static,
         F: Clone,
     {
@@ -65,12 +65,12 @@ impl Function {
         }
     }
 
-    pub(crate) fn call(&self, argument: &Value) -> EvalexprResult<Value> {
+    pub(crate) fn call(&self, argument: &Value<IntType, FloatType>) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
         (self.function)(argument)
     }
 }
 
-impl fmt::Debug for Function {
+impl<IntType, FloatType> fmt::Debug for Function<IntType, FloatType> {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         write!(f, "Function {{ [...] }}")
     }

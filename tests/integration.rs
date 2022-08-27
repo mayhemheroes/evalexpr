@@ -5,104 +5,104 @@ use std::convert::TryFrom;
 
 #[test]
 fn test_unary_examples() {
-    assert_eq!(eval("3"), Ok(Value::Int(3)));
-    assert_eq!(eval("3.3"), Ok(Value::Float(3.3)));
-    assert_eq!(eval("true"), Ok(Value::Boolean(true)));
-    assert_eq!(eval("false"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("3"), Ok(Value::Int(3)));
+    assert_eq!(eval::<i64, f64>("3.3"), Ok(Value::Float(3.3)));
+    assert_eq!(eval::<i64, f64>("true"), Ok(Value::Boolean(true)));
+    assert_eq!(eval::<i64, f64>("false"), Ok(Value::Boolean(false)));
     assert_eq!(
-        eval("blub"),
+        eval::<i64, f64>("blub"),
         Err(EvalexprError::VariableIdentifierNotFound(
             "blub".to_string()
         ))
     );
-    assert_eq!(eval("-3"), Ok(Value::Int(-3)));
-    assert_eq!(eval("-3.6"), Ok(Value::Float(-3.6)));
-    assert_eq!(eval("----3"), Ok(Value::Int(3)));
-    assert_eq!(eval("1e0"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("1e-0"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("10e3"), Ok(Value::Float(10000.0)));
-    assert_eq!(eval("10e+3"), Ok(Value::Float(10000.0)));
-    assert_eq!(eval("10e-3"), Ok(Value::Float(0.01)));
+    assert_eq!(eval::<i64, f64>("-3"), Ok(Value::Int(-3)));
+    assert_eq!(eval::<i64, f64>("-3.6"), Ok(Value::Float(-3.6)));
+    assert_eq!(eval::<i64, f64>("----3"), Ok(Value::Int(3)));
+    assert_eq!(eval::<i64, f64>("1e0"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("1e-0"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("10e3"), Ok(Value::Float(10000.0)));
+    assert_eq!(eval::<i64, f64>("10e+3"), Ok(Value::Float(10000.0)));
+    assert_eq!(eval::<i64, f64>("10e-3"), Ok(Value::Float(0.01)));
 }
 
 #[test]
 fn test_binary_examples() {
-    assert_eq!(eval("1+3"), Ok(Value::Int(4)));
-    assert_eq!(eval("3+1"), Ok(Value::Int(4)));
-    assert_eq!(eval("3-5"), Ok(Value::Int(-2)));
-    assert_eq!(eval("5-3"), Ok(Value::Int(2)));
-    assert_eq!(eval("5 / 4"), Ok(Value::Int(1)));
-    assert_eq!(eval("5 *3"), Ok(Value::Int(15)));
-    assert_eq!(eval("1.0+3"), Ok(Value::Float(4.0)));
-    assert_eq!(eval("3.0+1"), Ok(Value::Float(4.0)));
-    assert_eq!(eval("3-5.0"), Ok(Value::Float(-2.0)));
-    assert_eq!(eval("5-3.0"), Ok(Value::Float(2.0)));
-    assert_eq!(eval("5 / 4.0"), Ok(Value::Float(1.25)));
-    assert_eq!(eval("5.0 *3"), Ok(Value::Float(15.0)));
-    assert_eq!(eval("5.0 *-3"), Ok(Value::Float(-15.0)));
-    assert_eq!(eval("5.0 *- 3"), Ok(Value::Float(-15.0)));
-    assert_eq!(eval("5.0 * -3"), Ok(Value::Float(-15.0)));
-    assert_eq!(eval("5.0 * - 3"), Ok(Value::Float(-15.0)));
-    assert_eq!(eval("-5.0 *-3"), Ok(Value::Float(15.0)));
-    assert_eq!(eval("3+-1"), Ok(Value::Int(2)));
-    assert_eq!(eval("-3-5"), Ok(Value::Int(-8)));
-    assert_eq!(eval("-5--3"), Ok(Value::Int(-2)));
-    assert_eq!(eval("5e2--3"), Ok(Value::Float(503.0)));
-    assert_eq!(eval("-5e-2--3"), Ok(Value::Float(2.95)));
+    assert_eq!(eval::<i64, f64>("1+3"), Ok(Value::Int(4)));
+    assert_eq!(eval::<i64, f64>("3+1"), Ok(Value::Int(4)));
+    assert_eq!(eval::<i64, f64>("3-5"), Ok(Value::Int(-2)));
+    assert_eq!(eval::<i64, f64>("5-3"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("5 / 4"), Ok(Value::Int(1)));
+    assert_eq!(eval::<i64, f64>("5 *3"), Ok(Value::Int(15)));
+    assert_eq!(eval::<i64, f64>("1.0+3"), Ok(Value::Float(4.0)));
+    assert_eq!(eval::<i64, f64>("3.0+1"), Ok(Value::Float(4.0)));
+    assert_eq!(eval::<i64, f64>("3-5.0"), Ok(Value::Float(-2.0)));
+    assert_eq!(eval::<i64, f64>("5-3.0"), Ok(Value::Float(2.0)));
+    assert_eq!(eval::<i64, f64>("5 / 4.0"), Ok(Value::Float(1.25)));
+    assert_eq!(eval::<i64, f64>("5.0 *3"), Ok(Value::Float(15.0)));
+    assert_eq!(eval::<i64, f64>("5.0 *-3"), Ok(Value::Float(-15.0)));
+    assert_eq!(eval::<i64, f64>("5.0 *- 3"), Ok(Value::Float(-15.0)));
+    assert_eq!(eval::<i64, f64>("5.0 * -3"), Ok(Value::Float(-15.0)));
+    assert_eq!(eval::<i64, f64>("5.0 * - 3"), Ok(Value::Float(-15.0)));
+    assert_eq!(eval::<i64, f64>("-5.0 *-3"), Ok(Value::Float(15.0)));
+    assert_eq!(eval::<i64, f64>("3+-1"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("-3-5"), Ok(Value::Int(-8)));
+    assert_eq!(eval::<i64, f64>("-5--3"), Ok(Value::Int(-2)));
+    assert_eq!(eval::<i64, f64>("5e2--3"), Ok(Value::Float(503.0)));
+    assert_eq!(eval::<i64, f64>("-5e-2--3"), Ok(Value::Float(2.95)));
 }
 
 #[test]
 fn test_arithmetic_precedence_examples() {
-    assert_eq!(eval("1+3-2"), Ok(Value::Int(2)));
-    assert_eq!(eval("3+1*5"), Ok(Value::Int(8)));
-    assert_eq!(eval("2*3-5"), Ok(Value::Int(1)));
-    assert_eq!(eval("5-3/3"), Ok(Value::Int(4)));
-    assert_eq!(eval("5 / 4*2"), Ok(Value::Int(2)));
-    assert_eq!(eval("1-5 *3/15"), Ok(Value::Int(0)));
-    assert_eq!(eval("15/7/2.0"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("15.0/7/2"), Ok(Value::Float(15.0 / 7.0 / 2.0)));
-    assert_eq!(eval("15.0/-7/2"), Ok(Value::Float(15.0 / -7.0 / 2.0)));
-    assert_eq!(eval("-15.0/7/2"), Ok(Value::Float(-15.0 / 7.0 / 2.0)));
-    assert_eq!(eval("-15.0/7/-2"), Ok(Value::Float(-15.0 / 7.0 / -2.0)));
+    assert_eq!(eval::<i64, f64>("1+3-2"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("3+1*5"), Ok(Value::Int(8)));
+    assert_eq!(eval::<i64, f64>("2*3-5"), Ok(Value::Int(1)));
+    assert_eq!(eval::<i64, f64>("5-3/3"), Ok(Value::Int(4)));
+    assert_eq!(eval::<i64, f64>("5 / 4*2"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("1-5 *3/15"), Ok(Value::Int(0)));
+    assert_eq!(eval::<i64, f64>("15/7/2.0"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("15.0/7/2"), Ok(Value::Float(15.0 / 7.0 / 2.0)));
+    assert_eq!(eval::<i64, f64>("15.0/-7/2"), Ok(Value::Float(15.0 / -7.0 / 2.0)));
+    assert_eq!(eval::<i64, f64>("-15.0/7/2"), Ok(Value::Float(-15.0 / 7.0 / 2.0)));
+    assert_eq!(eval::<i64, f64>("-15.0/7/-2"), Ok(Value::Float(-15.0 / 7.0 / -2.0)));
 }
 
 #[test]
 fn test_braced_examples() {
-    assert_eq!(eval("(1)"), Ok(Value::Int(1)));
-    assert_eq!(eval("( 1.0 )"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("( true)"), Ok(Value::Boolean(true)));
-    assert_eq!(eval("( -1 )"), Ok(Value::Int(-1)));
-    assert_eq!(eval("-(1)"), Ok(Value::Int(-1)));
-    assert_eq!(eval("-(1 + 3) * 7"), Ok(Value::Int(-28)));
-    assert_eq!(eval("(1 * 1) - 3"), Ok(Value::Int(-2)));
-    assert_eq!(eval("4 / (2 * 2)"), Ok(Value::Int(1)));
-    assert_eq!(eval("7/(7/(7/(7/(7/(7)))))"), Ok(Value::Int(1)));
+    assert_eq!(eval::<i64, f64>("(1)"), Ok(Value::Int(1)));
+    assert_eq!(eval::<i64, f64>("( 1.0 )"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("( true)"), Ok(Value::Boolean(true)));
+    assert_eq!(eval::<i64, f64>("( -1 )"), Ok(Value::Int(-1)));
+    assert_eq!(eval::<i64, f64>("-(1)"), Ok(Value::Int(-1)));
+    assert_eq!(eval::<i64, f64>("-(1 + 3) * 7"), Ok(Value::Int(-28)));
+    assert_eq!(eval::<i64, f64>("(1 * 1) - 3"), Ok(Value::Int(-2)));
+    assert_eq!(eval::<i64, f64>("4 / (2 * 2)"), Ok(Value::Int(1)));
+    assert_eq!(eval::<i64, f64>("7/(7/(7/(7/(7/(7)))))"), Ok(Value::Int(1)));
 }
 
 #[test]
 fn test_mod_examples() {
-    assert_eq!(eval("1 % 4"), Ok(Value::Int(1)));
-    assert_eq!(eval("6 % 4"), Ok(Value::Int(2)));
-    assert_eq!(eval("1 % 4 + 2"), Ok(Value::Int(3)));
+    assert_eq!(eval::<i64, f64>("1 % 4"), Ok(Value::Int(1)));
+    assert_eq!(eval::<i64, f64>("6 % 4"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("1 % 4 + 2"), Ok(Value::Int(3)));
 }
 
 #[test]
 fn test_pow_examples() {
-    assert_eq!(eval("1 ^ 4"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("6 ^ 4"), Ok(Value::Float(6.0f64.powf(4.0))));
-    assert_eq!(eval("1 ^ 4 + 2"), Ok(Value::Float(3.0)));
-    assert_eq!(eval("2 ^ (4 + 2)"), Ok(Value::Float(64.0)));
+    assert_eq!(eval::<i64, f64>("1 ^ 4"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("6 ^ 4"), Ok(Value::Float(6.0f64.powf(4.0))));
+    assert_eq!(eval::<i64, f64>("1 ^ 4 + 2"), Ok(Value::Float(3.0)));
+    assert_eq!(eval::<i64, f64>("2 ^ (4 + 2)"), Ok(Value::Float(64.0)));
 }
 
 #[test]
 fn test_boolean_examples() {
-    assert_eq!(eval("true && false"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("true && false"), Ok(Value::Boolean(false)));
     assert_eq!(
-        eval("true && false || true && true"),
+        eval::<i64, f64>("true && false || true && true"),
         Ok(Value::Boolean(true))
     );
-    assert_eq!(eval("5 > 4 && 1 <= 1"), Ok(Value::Boolean(true)));
-    assert_eq!(eval("5.0 <= 4.9 || !(4 > 3.5)"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("5 > 4 && 1 <= 1"), Ok(Value::Boolean(true)));
+    assert_eq!(eval::<i64, f64>("5.0 <= 4.9 || !(4 > 3.5)"), Ok(Value::Boolean(false)));
 }
 
 #[test]
@@ -231,20 +231,20 @@ fn test_n_ary_functions() {
         .set_function(
             "count".into(),
             Function::new(|arguments| match arguments {
-                Value::Tuple(tuple) => Ok(Value::from(tuple.len() as IntType)),
-                Value::Empty => Ok(Value::from(0)),
-                _ => Ok(Value::from(1)),
+                Value::Tuple(tuple) => Ok(Value::<i64, f64>::int(tuple.len() as i64)),
+                Value::Empty => Ok(Value::<i64, f64>::int(0)),
+                _ => Ok(Value::<i64, f64>::int(1)),
             }),
         )
         .unwrap();
     context
-        .set_value("five".to_string(), Value::Int(5))
+        .set_value("five".to_string(), Value::<i64, f64>::Int(5))
         .unwrap();
     context
-        .set_function("function_four".into(), Function::new(|_| Ok(Value::Int(4))))
+        .set_function("function_four".into(), Function::new(|_| Ok(Value::<i64, f64>::Int(4))))
         .unwrap();
 
-    assert_eq!(eval_with_context("avg(7, 5)", &context), Ok(Value::Int(6)));
+    assert_eq!(eval_with_context("avg(7, 5)", &context), Ok(Value::<i64, f64>::Int(6)));
     assert_eq!(
         eval_with_context("avg(sub2 5, 5)", &context),
         Ok(Value::Int(4))
@@ -316,121 +316,121 @@ fn test_capturing_functions() {
 #[test]
 fn test_builtin_functions() {
     // Log
-    assert_eq!(eval("math::ln(2.718281828459045)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("math::log(9, 9)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("math::log2(2)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("math::log10(10)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("math::ln(2.718281828459045)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("math::log(9, 9)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("math::log2(2)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("math::log10(10)"), Ok(Value::Float(1.0)));
     // Powers
-    assert_eq!(eval("math::exp(2)"), Ok(Value::Float(2.0_f64.exp())));
-    assert_eq!(eval("math::exp2(2)"), Ok(Value::Float(2.0_f64.exp2())));
+    assert_eq!(eval::<i64, f64>("math::exp(2)"), Ok(Value::Float(2.0_f64.exp())));
+    assert_eq!(eval::<i64, f64>("math::exp2(2)"), Ok(Value::Float(2.0_f64.exp2())));
     assert_eq!(
-        eval("math::pow(1.5, 1.3)"),
+        eval::<i64, f64>("math::pow(1.5, 1.3)"),
         Ok(Value::Float(1.5_f64.powf(1.3)))
     );
     // Cos
-    assert_eq!(eval("math::cos(0)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("math::acos(1)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::cosh(0)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("math::acosh(1)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::cos(0)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("math::acos(1)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::cosh(0)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("math::acosh(1)"), Ok(Value::Float(0.0)));
     // Sin
-    assert_eq!(eval("math::sin(0)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::asin(0)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::sinh(0)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::asinh(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::sin(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::asin(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::sinh(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::asinh(0)"), Ok(Value::Float(0.0)));
     // Tan
-    assert_eq!(eval("math::tan(0)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::atan(0)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::tanh(0)"), Ok(Value::Float(0.0)));
-    assert_eq!(eval("math::atanh(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::tan(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::atan(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::tanh(0)"), Ok(Value::Float(0.0)));
+    assert_eq!(eval::<i64, f64>("math::atanh(0)"), Ok(Value::Float(0.0)));
     assert_eq!(
-        eval("math::atan2(1.2, -5.5)"),
+        eval::<i64, f64>("math::atan2(1.2, -5.5)"),
         Ok(Value::Float(1.2_f64.atan2(-5.5)))
     );
     // Root
-    assert_eq!(eval("math::sqrt(25)"), Ok(Value::Float(5.0)));
-    assert_eq!(eval("math::cbrt(8)"), Ok(Value::Float(2.0)));
+    assert_eq!(eval::<i64, f64>("math::sqrt(25)"), Ok(Value::Float(5.0)));
+    assert_eq!(eval::<i64, f64>("math::cbrt(8)"), Ok(Value::Float(2.0)));
     // Hypotenuse
     assert_eq!(
-        eval("math::hypot(8.2, 1.1)"),
+        eval::<i64, f64>("math::hypot(8.2, 1.1)"),
         Ok(Value::Float(8.2_f64.hypot(1.1)))
     );
     // Rounding
-    assert_eq!(eval("floor(1.1)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("floor(1.9)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("round(1.1)"), Ok(Value::Float(1.0)));
-    assert_eq!(eval("round(1.5)"), Ok(Value::Float(2.0)));
-    assert_eq!(eval("round(2.5)"), Ok(Value::Float(3.0)));
-    assert_eq!(eval("round(1.9)"), Ok(Value::Float(2.0)));
-    assert_eq!(eval("ceil(1.1)"), Ok(Value::Float(2.0)));
-    assert_eq!(eval("ceil(1.9)"), Ok(Value::Float(2.0)));
-    assert_eq!(eval("math::is_nan(1.0/0.0)"), Ok(Value::Boolean(false)));
-    assert_eq!(eval("math::is_nan(0.0/0.0)"), Ok(Value::Boolean(true)));
-    assert_eq!(eval("math::is_finite(1.0/0.0)"), Ok(Value::Boolean(false)));
-    assert_eq!(eval("math::is_finite(0.0/0.0)"), Ok(Value::Boolean(false)));
-    assert_eq!(eval("math::is_finite(0.0)"), Ok(Value::Boolean(true)));
+    assert_eq!(eval::<i64, f64>("floor(1.1)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("floor(1.9)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("round(1.1)"), Ok(Value::Float(1.0)));
+    assert_eq!(eval::<i64, f64>("round(1.5)"), Ok(Value::Float(2.0)));
+    assert_eq!(eval::<i64, f64>("round(2.5)"), Ok(Value::Float(3.0)));
+    assert_eq!(eval::<i64, f64>("round(1.9)"), Ok(Value::Float(2.0)));
+    assert_eq!(eval::<i64, f64>("ceil(1.1)"), Ok(Value::Float(2.0)));
+    assert_eq!(eval::<i64, f64>("ceil(1.9)"), Ok(Value::Float(2.0)));
+    assert_eq!(eval::<i64, f64>("math::is_nan(1.0/0.0)"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("math::is_nan(0.0/0.0)"), Ok(Value::Boolean(true)));
+    assert_eq!(eval::<i64, f64>("math::is_finite(1.0/0.0)"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("math::is_finite(0.0/0.0)"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("math::is_finite(0.0)"), Ok(Value::Boolean(true)));
     assert_eq!(
-        eval("math::is_infinite(0.0/0.0)"),
+        eval::<i64, f64>("math::is_infinite(0.0/0.0)"),
         Ok(Value::Boolean(false))
     );
-    assert_eq!(eval("math::is_infinite(1.0/0.0)"), Ok(Value::Boolean(true)));
-    assert_eq!(eval("math::is_normal(1.0/0.0)"), Ok(Value::Boolean(false)));
-    assert_eq!(eval("math::is_normal(0)"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("math::is_infinite(1.0/0.0)"), Ok(Value::Boolean(true)));
+    assert_eq!(eval::<i64, f64>("math::is_normal(1.0/0.0)"), Ok(Value::Boolean(false)));
+    assert_eq!(eval::<i64, f64>("math::is_normal(0)"), Ok(Value::Boolean(false)));
     // Other
-    assert_eq!(eval("typeof(4.0, 3)"), Ok(Value::String("tuple".into())));
-    assert_eq!(eval("typeof(4.0)"), Ok(Value::String("float".into())));
-    assert_eq!(eval("typeof(4)"), Ok(Value::String("int".into())));
-    assert_eq!(eval("typeof(\"\")"), Ok(Value::String("string".into())));
-    assert_eq!(eval("typeof(true)"), Ok(Value::String("boolean".into())));
-    assert_eq!(eval("typeof()"), Ok(Value::String("empty".into())));
-    assert_eq!(eval("min(4.0, 3)"), Ok(Value::Int(3)));
-    assert_eq!(eval("max(4.0, 3)"), Ok(Value::Float(4.0)));
-    assert_eq!(eval("len(\"foobar\")"), Ok(Value::Int(6)));
-    assert_eq!(eval("len(\"a\", \"b\")"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("typeof(4.0, 3)"), Ok(Value::String("tuple".into())));
+    assert_eq!(eval::<i64, f64>("typeof(4.0)"), Ok(Value::String("float".into())));
+    assert_eq!(eval::<i64, f64>("typeof(4)"), Ok(Value::String("int".into())));
+    assert_eq!(eval::<i64, f64>("typeof(\"\")"), Ok(Value::String("string".into())));
+    assert_eq!(eval::<i64, f64>("typeof(true)"), Ok(Value::String("boolean".into())));
+    assert_eq!(eval::<i64, f64>("typeof()"), Ok(Value::String("empty".into())));
+    assert_eq!(eval::<i64, f64>("min(4.0, 3)"), Ok(Value::Int(3)));
+    assert_eq!(eval::<i64, f64>("max(4.0, 3)"), Ok(Value::Float(4.0)));
+    assert_eq!(eval::<i64, f64>("len(\"foobar\")"), Ok(Value::Int(6)));
+    assert_eq!(eval::<i64, f64>("len(\"a\", \"b\")"), Ok(Value::Int(2)));
     // String
     assert_eq!(
-        eval("str::to_lowercase(\"FOOBAR\")"),
+        eval::<i64, f64>("str::to_lowercase(\"FOOBAR\")"),
         Ok(Value::from("foobar"))
     );
     assert_eq!(
-        eval("str::to_uppercase(\"foobar\")"),
+        eval::<i64, f64>("str::to_uppercase(\"foobar\")"),
         Ok(Value::from("FOOBAR"))
     );
     assert_eq!(
-        eval("str::trim(\"  foo  bar \")"),
+        eval::<i64, f64>("str::trim(\"  foo  bar \")"),
         Ok(Value::from("foo  bar"))
     );
     assert_eq!(
-        eval("str::from(\"a\")"),
+        eval::<i64, f64>("str::from(\"a\")"),
         Ok(Value::String(String::from("\"a\"")))
     );
-    assert_eq!(eval("str::from(1.0)"), Ok(Value::String(String::from("1"))));
-    assert_eq!(eval("str::from(1)"), Ok(Value::String(String::from("1"))));
+    assert_eq!(eval::<i64, f64>("str::from(1.0)"), Ok(Value::String(String::from("1"))));
+    assert_eq!(eval::<i64, f64>("str::from(1)"), Ok(Value::String(String::from("1"))));
     assert_eq!(
-        eval("str::from(true)"),
+        eval::<i64, f64>("str::from(true)"),
         Ok(Value::String(String::from("true")))
     );
     assert_eq!(
-        eval("str::from(1, 2, 3)"),
+        eval::<i64, f64>("str::from(1, 2, 3)"),
         Ok(Value::String(String::from("(1, 2, 3)")))
     );
-    assert_eq!(eval("str::from()"), Ok(Value::String(String::from("()"))));
+    assert_eq!(eval::<i64, f64>("str::from()"), Ok(Value::String(String::from("()"))));
     // Bitwise
-    assert_eq!(eval("bitand(5, -1)"), Ok(Value::Int(5)));
-    assert_eq!(eval("bitand(6, 5)"), Ok(Value::Int(4)));
-    assert_eq!(eval("bitor(5, -1)"), Ok(Value::Int(-1)));
-    assert_eq!(eval("bitor(6, 5)"), Ok(Value::Int(7)));
-    assert_eq!(eval("bitxor(5, -1)"), Ok(Value::Int(-6)));
-    assert_eq!(eval("bitxor(6, 5)"), Ok(Value::Int(3)));
-    assert_eq!(eval("bitnot(5)"), Ok(Value::Int(-6)));
-    assert_eq!(eval("bitnot(-1)"), Ok(Value::Int(0)));
-    assert_eq!(eval("shl(5, 1)"), Ok(Value::Int(10)));
-    assert_eq!(eval("shl(-6, 5)"), Ok(Value::Int(-192)));
-    assert_eq!(eval("shr(5, 1)"), Ok(Value::Int(2)));
-    assert_eq!(eval("shr(-6, 5)"), Ok(Value::Int(-1)));
-    assert_eq!(eval("if(true, -6, 5)"), Ok(Value::Int(-6)));
-    assert_eq!(eval("if(false, -6, 5)"), Ok(Value::Int(5)));
+    assert_eq!(eval::<i64, f64>("bitand(5, -1)"), Ok(Value::Int(5)));
+    assert_eq!(eval::<i64, f64>("bitand(6, 5)"), Ok(Value::Int(4)));
+    assert_eq!(eval::<i64, f64>("bitor(5, -1)"), Ok(Value::Int(-1)));
+    assert_eq!(eval::<i64, f64>("bitor(6, 5)"), Ok(Value::Int(7)));
+    assert_eq!(eval::<i64, f64>("bitxor(5, -1)"), Ok(Value::Int(-6)));
+    assert_eq!(eval::<i64, f64>("bitxor(6, 5)"), Ok(Value::Int(3)));
+    assert_eq!(eval::<i64, f64>("bitnot(5)"), Ok(Value::Int(-6)));
+    assert_eq!(eval::<i64, f64>("bitnot(-1)"), Ok(Value::Int(0)));
+    assert_eq!(eval::<i64, f64>("shl(5, 1)"), Ok(Value::Int(10)));
+    assert_eq!(eval::<i64, f64>("shl(-6, 5)"), Ok(Value::Int(-192)));
+    assert_eq!(eval::<i64, f64>("shr(5, 1)"), Ok(Value::Int(2)));
+    assert_eq!(eval::<i64, f64>("shr(-6, 5)"), Ok(Value::Int(-1)));
+    assert_eq!(eval::<i64, f64>("if(true, -6, 5)"), Ok(Value::Int(-6)));
+    assert_eq!(eval::<i64, f64>("if(false, -6, 5)"), Ok(Value::Int(5)));
     assert_eq!(
-        eval("if(2-1==1, \"good\", 0)"),
+        eval::<i64, f64>("if(2-1==1, \"good\", 0)"),
         Ok(Value::String(String::from("good")))
     );
 }
@@ -438,23 +438,23 @@ fn test_builtin_functions() {
 #[test]
 fn test_errors() {
     assert_eq!(
-        eval("-true"),
+        eval::<i64, f64>("-true"),
         Err(EvalexprError::expected_number(Value::Boolean(true)))
     );
     assert_eq!(
-        eval("1-true"),
+        eval::<i64, f64>("1-true"),
         Err(EvalexprError::expected_number(Value::Boolean(true)))
     );
     assert_eq!(
-        eval("true-"),
+        eval::<i64, f64>("true-"),
         Err(EvalexprError::WrongOperatorArgumentAmount {
             actual: 1,
             expected: 2,
         })
     );
-    assert_eq!(eval("!(()true)"), Err(EvalexprError::AppendedToLeafNode));
+    assert_eq!(eval::<i64, f64>("!(()true)"), Err(EvalexprError::AppendedToLeafNode));
     assert_eq!(
-        eval("math::is_nan(\"xxx\")"),
+        eval::<i64, f64>("math::is_nan(\"xxx\")"),
         Err(EvalexprError::ExpectedNumber {
             actual: Value::String("xxx".to_string())
         })
@@ -463,39 +463,39 @@ fn test_errors() {
 
 #[test]
 fn test_no_panic() {
-    assert!(eval(&format!(
+    assert!(eval::<i64, f64>(&format!(
         "{} + {}",
-        IntType::max_value(),
-        IntType::max_value()
+        <i64 as Number>::max_value().unwrap(),
+        <i64 as Number>::max_value().unwrap(),
     ))
     .is_err());
-    assert!(eval(&format!(
+    assert!(eval::<i64, f64>(&format!(
         "-{} - {}",
-        IntType::max_value(),
-        IntType::max_value()
+        <i64 as Number>::max_value().unwrap(),
+        <i64 as Number>::max_value().unwrap(),
     ))
     .is_err());
-    assert!(eval(&format!("-(-{} - 1)", IntType::max_value())).is_err());
-    assert!(eval(&format!(
+    assert!(eval::<i64, f64>(&format!("-(-{} - 1)", <i64 as Number>::max_value().unwrap())).is_err());
+    assert!(eval::<i64, f64>(&format!(
         "{} * {}",
-        IntType::max_value(),
-        IntType::max_value()
+        <i64 as Number>::max_value().unwrap(),
+        <i64 as Number>::max_value().unwrap(),
     ))
     .is_err());
-    assert!(eval(&format!("{} / {}", IntType::max_value(), 0)).is_err());
-    assert!(eval(&format!("{} % {}", IntType::max_value(), 0)).is_err());
-    assert!(eval(&format!(
+    assert!(eval::<i64, f64>(&format!("{} / {}", <i64 as Number>::max_value().unwrap(), 0)).is_err());
+    assert!(eval::<i64, f64>(&format!("{} % {}", <i64 as Number>::max_value().unwrap(), 0)).is_err());
+    assert!(eval::<i64, f64>(&format!(
         "{} ^ {}",
-        IntType::max_value(),
-        IntType::max_value()
+        <i64 as Number>::max_value().unwrap(),
+        <i64 as Number>::max_value().unwrap(),
     ))
     .is_ok());
-    assert!(eval("if").is_err());
-    assert!(eval("if()").is_err());
-    assert!(eval("if(true, 1)").is_err());
-    assert!(eval("if(false, 2)").is_err());
-    assert!(eval("if(1,1,1)").is_err());
-    assert!(eval("if(true,1,1,1)").is_err());
+    assert!(eval::<i64, f64>("if").is_err());
+    assert!(eval::<i64, f64>("if()").is_err());
+    assert!(eval::<i64, f64>("if(true, 1)").is_err());
+    assert!(eval::<i64, f64>("if(false, 2)").is_err());
+    assert!(eval::<i64, f64>("if(1,1,1)").is_err());
+    assert!(eval::<i64, f64>("if(true,1,1,1)").is_err());
 }
 
 #[test]
@@ -505,29 +505,29 @@ fn test_shortcut_functions() {
         .set_value("string".into(), Value::from("a string"))
         .unwrap();
 
-    assert_eq!(eval_string("\"3.3\""), Ok("3.3".to_owned()));
+    assert_eq!(eval_string::<i64, f64>("\"3.3\""), Ok("3.3".to_owned()));
     assert_eq!(
-        eval_string("3.3"),
+        eval_string::<i64, f64>("3.3"),
         Err(EvalexprError::ExpectedString {
             actual: Value::Float(3.3)
         })
     );
     assert_eq!(
-        eval_string("3..3"),
+        eval_string::<i64, f64>("3..3"),
         Err(EvalexprError::VariableIdentifierNotFound("3..3".to_owned()))
     );
     assert_eq!(
-        eval_string_with_context("string", &context),
+        eval_string_with_context::<_, i64, f64>("string", &context),
         Ok("a string".to_owned())
     );
     assert_eq!(
-        eval_string_with_context("3.3", &context),
+        eval_string_with_context::<_, i64, f64>("3.3", &context),
         Err(EvalexprError::ExpectedString {
             actual: Value::Float(3.3)
         })
     );
     assert_eq!(
-        eval_string_with_context("3..3", &context),
+        eval_string_with_context::<_, i64, f64>("3..3", &context),
         Err(EvalexprError::VariableIdentifierNotFound("3..3".to_owned()))
     );
     assert_eq!(
@@ -545,26 +545,26 @@ fn test_shortcut_functions() {
         Err(EvalexprError::VariableIdentifierNotFound("3..3".to_owned()))
     );
 
-    assert_eq!(eval_float("3.3"), Ok(3.3));
+    assert_eq!(eval_float::<i64, f64>("3.3"), Ok(3.3));
     assert_eq!(
-        eval_float("33"),
+        eval_float::<i64, f64>("33"),
         Err(EvalexprError::ExpectedFloat {
             actual: Value::Int(33)
         })
     );
     assert_eq!(
-        eval_float("asd()"),
+        eval_float::<i64, f64>("asd()"),
         Err(EvalexprError::FunctionIdentifierNotFound("asd".to_owned()))
     );
-    assert_eq!(eval_float_with_context("3.3", &context), Ok(3.3));
+    assert_eq!(eval_float_with_context::<_, i64, f64>("3.3", &context), Ok(3.3));
     assert_eq!(
-        eval_float_with_context("33", &context),
+        eval_float_with_context::<_, i64, f64>("33", &context),
         Err(EvalexprError::ExpectedFloat {
             actual: Value::Int(33)
         })
     );
     assert_eq!(
-        eval_float_with_context("asd)", &context),
+        eval_float_with_context::<_, i64, f64>("asd)", &context),
         Err(EvalexprError::UnmatchedRBrace)
     );
     assert_eq!(eval_float_with_context_mut("3.3", &mut context), Ok(3.3));
@@ -579,26 +579,26 @@ fn test_shortcut_functions() {
         Err(EvalexprError::UnmatchedLBrace)
     );
 
-    assert_eq!(eval_int("3"), Ok(3));
+    assert_eq!(eval_int::<i64, f64>("3"), Ok(3));
     assert_eq!(
-        eval_int("3.3"),
+        eval_int::<i64, f64>("3.3"),
         Err(EvalexprError::ExpectedInt {
             actual: Value::Float(3.3)
         })
     );
     assert_eq!(
-        eval_int("(,);."),
+        eval_int::<i64, f64>("(,);."),
         Err(EvalexprError::VariableIdentifierNotFound(".".to_owned()))
     );
-    assert_eq!(eval_int_with_context("3", &context), Ok(3));
+    assert_eq!(eval_int_with_context::<_, i64, f64>("3", &context), Ok(3));
     assert_eq!(
-        eval_int_with_context("3.3", &context),
+        eval_int_with_context::<_, i64, f64>("3.3", &context),
         Err(EvalexprError::ExpectedInt {
             actual: Value::Float(3.3)
         })
     );
     assert_eq!(
-        eval_int_with_context("(,);.", &context),
+        eval_int_with_context::<_, i64, f64>("(,);.", &context),
         Err(EvalexprError::VariableIdentifierNotFound(".".to_owned()))
     );
     assert_eq!(eval_int_with_context_mut("3", &mut context), Ok(3));
@@ -613,15 +613,15 @@ fn test_shortcut_functions() {
         Err(EvalexprError::VariableIdentifierNotFound(".".to_owned()))
     );
 
-    assert_eq!(eval_number("3"), Ok(3.0));
+    assert_eq!(eval_number::<i64, f64>("3"), Ok(3.0));
     assert_eq!(
-        eval_number("true"),
+        eval_number::<i64, f64>("true"),
         Err(EvalexprError::ExpectedNumber {
             actual: Value::Boolean(true)
         })
     );
     assert_eq!(
-        eval_number("abc"),
+        eval_number::<i64, f64>("abc"),
         Err(EvalexprError::VariableIdentifierNotFound("abc".to_owned()))
     );
     assert_eq!(eval_number_with_context("3.5", &context), Ok(3.5));
@@ -649,28 +649,28 @@ fn test_shortcut_functions() {
         Err(EvalexprError::VariableIdentifierNotFound("abc".to_owned()))
     );
 
-    assert_eq!(eval_boolean("true"), Ok(true));
+    assert_eq!(eval_boolean::<i64, f64>("true"), Ok(true));
     assert_eq!(
-        eval_boolean("4"),
+        eval_boolean::<i64, f64>("4"),
         Err(EvalexprError::ExpectedBoolean {
             actual: Value::Int(4)
         })
     );
     assert_eq!(
-        eval_boolean("trueee"),
+        eval_boolean::<i64, f64>("trueee"),
         Err(EvalexprError::VariableIdentifierNotFound(
             "trueee".to_owned()
         ))
     );
-    assert_eq!(eval_boolean_with_context("true", &context), Ok(true));
+    assert_eq!(eval_boolean_with_context::<_, i64, f64>("true", &context), Ok(true));
     assert_eq!(
-        eval_boolean_with_context("4", &context),
+        eval_boolean_with_context::<_, i64, f64>("4", &context),
         Err(EvalexprError::ExpectedBoolean {
             actual: Value::Int(4)
         })
     );
     assert_eq!(
-        eval_boolean_with_context("trueee", &context),
+        eval_boolean_with_context::<_, i64, f64>("trueee", &context),
         Err(EvalexprError::VariableIdentifierNotFound(
             "trueee".to_owned()
         ))
@@ -692,29 +692,29 @@ fn test_shortcut_functions() {
         ))
     );
 
-    assert_eq!(eval_tuple("3,3"), Ok(vec![Value::Int(3), Value::Int(3)]));
+    assert_eq!(eval_tuple::<i64, f64>("3,3"), Ok(vec![Value::Int(3), Value::Int(3)]));
     assert_eq!(
-        eval_tuple("33"),
+        eval_tuple::<i64, f64>("33"),
         Err(EvalexprError::ExpectedTuple {
             actual: Value::Int(33)
         })
     );
     assert_eq!(
-        eval_tuple("3a3"),
+        eval_tuple::<i64, f64>("3a3"),
         Err(EvalexprError::VariableIdentifierNotFound("3a3".to_owned()))
     );
     assert_eq!(
-        eval_tuple_with_context("3,3", &context),
+        eval_tuple_with_context::<_, i64, f64>("3,3", &context),
         Ok(vec![Value::Int(3), Value::Int(3)])
     );
     assert_eq!(
-        eval_tuple_with_context("33", &context),
+        eval_tuple_with_context::<_, i64, f64>("33", &context),
         Err(EvalexprError::ExpectedTuple {
             actual: Value::Int(33)
         })
     );
     assert_eq!(
-        eval_tuple_with_context("3a3", &context),
+        eval_tuple_with_context::<_, i64, f64>("3a3", &context),
         Err(EvalexprError::VariableIdentifierNotFound("3a3".to_owned()))
     );
     assert_eq!(
@@ -732,28 +732,28 @@ fn test_shortcut_functions() {
         Err(EvalexprError::VariableIdentifierNotFound("3a3".to_owned()))
     );
 
-    assert_eq!(eval_empty(""), Ok(EMPTY_VALUE));
-    assert_eq!(eval_empty("()"), Ok(EMPTY_VALUE));
+    assert_eq!(eval_empty::<i64, f64>(""), Ok(EMPTY_VALUE));
+    assert_eq!(eval_empty::<i64, f64>("()"), Ok(EMPTY_VALUE));
     assert_eq!(
-        eval_empty("(,)"),
+        eval_empty::<i64, f64>("(,)"),
         Err(EvalexprError::ExpectedEmpty {
             actual: Value::Tuple(vec![Value::Empty, Value::Empty])
         })
     );
     assert_eq!(
-        eval_empty("xaq"),
+        eval_empty::<i64, f64>("xaq"),
         Err(EvalexprError::VariableIdentifierNotFound("xaq".to_owned()))
     );
-    assert_eq!(eval_empty_with_context("", &context), Ok(EMPTY_VALUE));
-    assert_eq!(eval_empty_with_context("()", &context), Ok(EMPTY_VALUE));
+    assert_eq!(eval_empty_with_context::<_, i64, f64>("", &context), Ok(EMPTY_VALUE));
+    assert_eq!(eval_empty_with_context::<_, i64, f64>("()", &context), Ok(EMPTY_VALUE));
     assert_eq!(
-        eval_empty_with_context("(,)", &context),
+        eval_empty_with_context::<_, i64, f64>("(,)", &context),
         Err(EvalexprError::ExpectedEmpty {
             actual: Value::Tuple(vec![Value::Empty, Value::Empty])
         })
     );
     assert_eq!(
-        eval_empty_with_context("xaq", &context),
+        eval_empty_with_context::<_, i64, f64>("xaq", &context),
         Err(EvalexprError::VariableIdentifierNotFound("xaq".to_owned()))
     );
     assert_eq!(
@@ -778,27 +778,27 @@ fn test_shortcut_functions() {
     // With detour via build_operator_tree
 
     assert_eq!(
-        build_operator_tree("\"3.3\"").unwrap().eval_string(),
+        build_operator_tree::<i64, f64>("\"3.3\"").unwrap().eval_string(),
         Ok("3.3".to_owned())
     );
     assert_eq!(
-        build_operator_tree("3.3").unwrap().eval_string(),
+        build_operator_tree::<i64, f64>("3.3").unwrap().eval_string(),
         Err(EvalexprError::ExpectedString {
             actual: Value::Float(3.3)
         })
     );
     assert_eq!(
-        build_operator_tree("3..3").unwrap().eval_string(),
+        build_operator_tree::<i64, f64>("3..3").unwrap().eval_string(),
         Err(EvalexprError::VariableIdentifierNotFound("3..3".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("string")
+        build_operator_tree::<i64, f64>("string")
             .unwrap()
             .eval_string_with_context(&context),
         Ok("a string".to_owned())
     );
     assert_eq!(
-        build_operator_tree("3.3")
+        build_operator_tree::<i64, f64>("3.3")
             .unwrap()
             .eval_string_with_context(&context),
         Err(EvalexprError::ExpectedString {
@@ -806,19 +806,19 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("3..3")
+        build_operator_tree::<i64, f64>("3..3")
             .unwrap()
             .eval_string_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound("3..3".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("string")
+        build_operator_tree::<i64, f64>("string")
             .unwrap()
             .eval_string_with_context_mut(&mut context),
         Ok("a string".to_string())
     );
     assert_eq!(
-        build_operator_tree("3.3")
+        build_operator_tree::<i64, f64>("3.3")
             .unwrap()
             .eval_string_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedString {
@@ -826,31 +826,31 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("3..3")
+        build_operator_tree::<i64, f64>("3..3")
             .unwrap()
             .eval_string_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound("3..3".to_owned()))
     );
 
-    assert_eq!(build_operator_tree("3.3").unwrap().eval_float(), Ok(3.3));
+    assert_eq!(build_operator_tree::<i64, f64>("3.3").unwrap().eval_float(), Ok(3.3));
     assert_eq!(
-        build_operator_tree("33").unwrap().eval_float(),
+        build_operator_tree::<i64, f64>("33").unwrap().eval_float(),
         Err(EvalexprError::ExpectedFloat {
             actual: Value::Int(33)
         })
     );
     assert_eq!(
-        build_operator_tree("asd()").unwrap().eval_float(),
+        build_operator_tree::<i64, f64>("asd()").unwrap().eval_float(),
         Err(EvalexprError::FunctionIdentifierNotFound("asd".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3.3")
+        build_operator_tree::<i64, f64>("3.3")
             .unwrap()
             .eval_float_with_context(&context),
         Ok(3.3)
     );
     assert_eq!(
-        build_operator_tree("33")
+        build_operator_tree::<i64, f64>("33")
             .unwrap()
             .eval_float_with_context(&context),
         Err(EvalexprError::ExpectedFloat {
@@ -858,19 +858,19 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("asd")
+        build_operator_tree::<i64, f64>("asd")
             .unwrap()
             .eval_float_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound("asd".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3.3")
+        build_operator_tree::<i64, f64>("3.3")
             .unwrap()
             .eval_float_with_context_mut(&mut context),
         Ok(3.3)
     );
     assert_eq!(
-        build_operator_tree("33")
+        build_operator_tree::<i64, f64>("33")
             .unwrap()
             .eval_float_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedFloat {
@@ -878,31 +878,31 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("asd")
+        build_operator_tree::<i64, f64>("asd")
             .unwrap()
             .eval_float_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound("asd".to_owned()))
     );
 
-    assert_eq!(build_operator_tree("3").unwrap().eval_int(), Ok(3));
+    assert_eq!(build_operator_tree::<i64, f64>("3").unwrap().eval_int(), Ok(3));
     assert_eq!(
-        build_operator_tree("3.3").unwrap().eval_int(),
+        build_operator_tree::<i64, f64>("3.3").unwrap().eval_int(),
         Err(EvalexprError::ExpectedInt {
             actual: Value::Float(3.3)
         })
     );
     assert_eq!(
-        build_operator_tree("(,);.").unwrap().eval_int(),
+        build_operator_tree::<i64, f64>("(,);.").unwrap().eval_int(),
         Err(EvalexprError::VariableIdentifierNotFound(".".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3")
+        build_operator_tree::<i64, f64>("3")
             .unwrap()
             .eval_int_with_context(&context),
         Ok(3)
     );
     assert_eq!(
-        build_operator_tree("3.3")
+        build_operator_tree::<i64, f64>("3.3")
             .unwrap()
             .eval_int_with_context(&context),
         Err(EvalexprError::ExpectedInt {
@@ -910,19 +910,19 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("(,);.")
+        build_operator_tree::<i64, f64>("(,);.")
             .unwrap()
             .eval_int_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound(".".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3")
+        build_operator_tree::<i64, f64>("3")
             .unwrap()
             .eval_int_with_context_mut(&mut context),
         Ok(3)
     );
     assert_eq!(
-        build_operator_tree("3.3")
+        build_operator_tree::<i64, f64>("3.3")
             .unwrap()
             .eval_int_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedInt {
@@ -930,31 +930,31 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("(,);.")
+        build_operator_tree::<i64, f64>("(,);.")
             .unwrap()
             .eval_int_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound(".".to_owned()))
     );
 
-    assert_eq!(build_operator_tree("3").unwrap().eval_number(), Ok(3.0));
+    assert_eq!(build_operator_tree::<i64, f64>("3").unwrap().eval_number(), Ok(3.0));
     assert_eq!(
-        build_operator_tree("true").unwrap().eval_number(),
+        build_operator_tree::<i64, f64>("true").unwrap().eval_number(),
         Err(EvalexprError::ExpectedNumber {
             actual: Value::Boolean(true)
         })
     );
     assert_eq!(
-        build_operator_tree("abc").unwrap().eval_number(),
+        build_operator_tree::<i64, f64>("abc").unwrap().eval_number(),
         Err(EvalexprError::VariableIdentifierNotFound("abc".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3")
+        build_operator_tree::<i64, f64>("3")
             .unwrap()
             .eval_number_with_context(&context),
         Ok(3.0)
     );
     assert_eq!(
-        build_operator_tree("true")
+        build_operator_tree::<i64, f64>("true")
             .unwrap()
             .eval_number_with_context(&context),
         Err(EvalexprError::ExpectedNumber {
@@ -962,19 +962,19 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("abc")
+        build_operator_tree::<i64, f64>("abc")
             .unwrap()
             .eval_number_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound("abc".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3")
+        build_operator_tree::<i64, f64>("3")
             .unwrap()
             .eval_number_with_context_mut(&mut context),
         Ok(3.0)
     );
     assert_eq!(
-        build_operator_tree("true")
+        build_operator_tree::<i64, f64>("true")
             .unwrap()
             .eval_number_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedNumber {
@@ -982,36 +982,36 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("abc")
+        build_operator_tree::<i64, f64>("abc")
             .unwrap()
             .eval_number_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound("abc".to_owned()))
     );
 
     assert_eq!(
-        build_operator_tree("true").unwrap().eval_boolean(),
+        build_operator_tree::<i64, f64>("true").unwrap().eval_boolean(),
         Ok(true)
     );
     assert_eq!(
-        build_operator_tree("4").unwrap().eval_boolean(),
+        build_operator_tree::<i64, f64>("4").unwrap().eval_boolean(),
         Err(EvalexprError::ExpectedBoolean {
             actual: Value::Int(4)
         })
     );
     assert_eq!(
-        build_operator_tree("trueee").unwrap().eval_boolean(),
+        build_operator_tree::<i64, f64>("trueee").unwrap().eval_boolean(),
         Err(EvalexprError::VariableIdentifierNotFound(
             "trueee".to_owned()
         ))
     );
     assert_eq!(
-        build_operator_tree("true")
+        build_operator_tree::<i64, f64>("true")
             .unwrap()
             .eval_boolean_with_context(&context),
         Ok(true)
     );
     assert_eq!(
-        build_operator_tree("4")
+        build_operator_tree::<i64, f64>("4")
             .unwrap()
             .eval_boolean_with_context(&context),
         Err(EvalexprError::ExpectedBoolean {
@@ -1019,7 +1019,7 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("trueee")
+        build_operator_tree::<i64, f64>("trueee")
             .unwrap()
             .eval_boolean_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound(
@@ -1027,13 +1027,13 @@ fn test_shortcut_functions() {
         ))
     );
     assert_eq!(
-        build_operator_tree("true")
+        build_operator_tree::<i64, f64>("true")
             .unwrap()
             .eval_boolean_with_context_mut(&mut context),
         Ok(true)
     );
     assert_eq!(
-        build_operator_tree("4")
+        build_operator_tree::<i64, f64>("4")
             .unwrap()
             .eval_boolean_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedBoolean {
@@ -1041,7 +1041,7 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("trueee")
+        build_operator_tree::<i64, f64>("trueee")
             .unwrap()
             .eval_boolean_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound(
@@ -1050,27 +1050,27 @@ fn test_shortcut_functions() {
     );
 
     assert_eq!(
-        build_operator_tree("3,3").unwrap().eval_tuple(),
+        build_operator_tree::<i64, f64>("3,3").unwrap().eval_tuple(),
         Ok(vec![Value::Int(3), Value::Int(3)])
     );
     assert_eq!(
-        build_operator_tree("33").unwrap().eval_tuple(),
+        build_operator_tree::<i64, f64>("33").unwrap().eval_tuple(),
         Err(EvalexprError::ExpectedTuple {
             actual: Value::Int(33)
         })
     );
     assert_eq!(
-        build_operator_tree("3a3").unwrap().eval_tuple(),
+        build_operator_tree::<i64, f64>("3a3").unwrap().eval_tuple(),
         Err(EvalexprError::VariableIdentifierNotFound("3a3".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3,3")
+        build_operator_tree::<i64, f64>("3,3")
             .unwrap()
             .eval_tuple_with_context(&context),
         Ok(vec![Value::Int(3), Value::Int(3)])
     );
     assert_eq!(
-        build_operator_tree("33")
+        build_operator_tree::<i64, f64>("33")
             .unwrap()
             .eval_tuple_with_context(&context),
         Err(EvalexprError::ExpectedTuple {
@@ -1078,19 +1078,19 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("3a3")
+        build_operator_tree::<i64, f64>("3a3")
             .unwrap()
             .eval_tuple_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound("3a3".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("3,3")
+        build_operator_tree::<i64, f64>("3,3")
             .unwrap()
             .eval_tuple_with_context_mut(&mut context),
         Ok(vec![Value::Int(3), Value::Int(3)])
     );
     assert_eq!(
-        build_operator_tree("33")
+        build_operator_tree::<i64, f64>("33")
             .unwrap()
             .eval_tuple_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedTuple {
@@ -1098,44 +1098,44 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("3a3")
+        build_operator_tree::<i64, f64>("3a3")
             .unwrap()
             .eval_tuple_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound("3a3".to_owned()))
     );
 
     assert_eq!(
-        build_operator_tree("").unwrap().eval_empty(),
+        build_operator_tree::<i64, f64>("").unwrap().eval_empty(),
         Ok(EMPTY_VALUE)
     );
     assert_eq!(
-        build_operator_tree("()").unwrap().eval_empty(),
+        build_operator_tree::<i64, f64>("()").unwrap().eval_empty(),
         Ok(EMPTY_VALUE)
     );
     assert_eq!(
-        build_operator_tree("(,)").unwrap().eval_empty(),
+        build_operator_tree::<i64, f64>("(,)").unwrap().eval_empty(),
         Err(EvalexprError::ExpectedEmpty {
             actual: Value::Tuple(vec![Value::Empty, Value::Empty])
         })
     );
     assert_eq!(
-        build_operator_tree("xaq").unwrap().eval_empty(),
+        build_operator_tree::<i64, f64>("xaq").unwrap().eval_empty(),
         Err(EvalexprError::VariableIdentifierNotFound("xaq".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("")
+        build_operator_tree::<i64, f64>("")
             .unwrap()
             .eval_empty_with_context(&context),
         Ok(EMPTY_VALUE)
     );
     assert_eq!(
-        build_operator_tree("()")
+        build_operator_tree::<i64, f64>("()")
             .unwrap()
             .eval_empty_with_context(&context),
         Ok(EMPTY_VALUE)
     );
     assert_eq!(
-        build_operator_tree("(,)")
+        build_operator_tree::<i64, f64>("(,)")
             .unwrap()
             .eval_empty_with_context(&context),
         Err(EvalexprError::ExpectedEmpty {
@@ -1143,25 +1143,25 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("xaq")
+        build_operator_tree::<i64, f64>("xaq")
             .unwrap()
             .eval_empty_with_context(&context),
         Err(EvalexprError::VariableIdentifierNotFound("xaq".to_owned()))
     );
     assert_eq!(
-        build_operator_tree("")
+        build_operator_tree::<i64, f64>("")
             .unwrap()
             .eval_empty_with_context_mut(&mut context),
         Ok(EMPTY_VALUE)
     );
     assert_eq!(
-        build_operator_tree("()")
+        build_operator_tree::<i64, f64>("()")
             .unwrap()
             .eval_empty_with_context_mut(&mut context),
         Ok(EMPTY_VALUE)
     );
     assert_eq!(
-        build_operator_tree("(,)")
+        build_operator_tree::<i64, f64>("(,)")
             .unwrap()
             .eval_empty_with_context_mut(&mut context),
         Err(EvalexprError::ExpectedEmpty {
@@ -1169,7 +1169,7 @@ fn test_shortcut_functions() {
         })
     );
     assert_eq!(
-        build_operator_tree("xaq")
+        build_operator_tree::<i64, f64>("xaq")
             .unwrap()
             .eval_empty_with_context_mut(&mut context),
         Err(EvalexprError::VariableIdentifierNotFound("xaq".to_owned()))
@@ -1178,7 +1178,7 @@ fn test_shortcut_functions() {
 
 #[test]
 fn test_whitespace() {
-    assert!(eval_boolean("2 < = 3").is_err());
+    assert!(eval_boolean::<i64, f64>("2 < = 3").is_err());
 }
 
 #[test]
@@ -1205,20 +1205,20 @@ fn test_assignment() {
         Ok(EMPTY_VALUE)
     );
 
-    assert_eq!(eval_int_with_context("int", &context), Ok(3));
-    assert_eq!(eval_float_with_context("float", &context), Ok(2.0));
+    assert_eq!(eval_int_with_context::<_, i64, f64>("int", &context), Ok(3));
+    assert_eq!(eval_float_with_context::<_, i64, f64>("float", &context), Ok(2.0));
     assert_eq!(
-        eval_tuple_with_context("tuple", &context),
-        Ok(vec![1.into(), 1.into()])
+        eval_tuple_with_context::<_, i64, f64>("tuple", &context),
+        Ok(vec![Value::int(1), Value::int(1)])
     );
-    assert_eq!(eval_empty_with_context("empty", &context), Ok(EMPTY_VALUE));
-    assert_eq!(eval_boolean_with_context("boolean", &context), Ok(false));
+    assert_eq!(eval_empty_with_context::<_, i64, f64>("empty", &context), Ok(EMPTY_VALUE));
+    assert_eq!(eval_boolean_with_context::<_, i64, f64>("boolean", &context), Ok(false));
 
     assert_eq!(
         eval_empty_with_context_mut("b = a = 5", &mut context),
         Ok(EMPTY_VALUE)
     );
-    assert_eq!(eval_empty_with_context("b", &context), Ok(EMPTY_VALUE));
+    assert_eq!(eval_empty_with_context::<_, i64, f64>("b", &context), Ok(EMPTY_VALUE));
 }
 
 #[test]
@@ -1233,114 +1233,114 @@ fn test_expression_chaining() {
 #[test]
 fn test_strings() {
     let mut context = HashMapContext::new();
-    assert_eq!(eval("\"string\""), Ok(Value::from("string")));
+    assert_eq!(eval::<i64, f64>("\"string\""), Ok(Value::from("string")));
     assert_eq!(
         eval_with_context_mut("a = \"a string\"", &mut context),
         Ok(Value::Empty)
     );
     assert_eq!(
-        eval_boolean_with_context("a == \"a string\"", &context),
+        eval_boolean_with_context::<_, i64, f64>("a == \"a string\"", &context),
         Ok(true)
     );
-    assert_eq!(eval("\"a\" + \"b\""), Ok(Value::from("ab")));
-    assert_eq!(eval("\"a\" > \"b\""), Ok(Value::from(false)));
-    assert_eq!(eval("\"a\" < \"b\""), Ok(Value::from(true)));
-    assert_eq!(eval("\"a\" >= \"b\""), Ok(Value::from(false)));
-    assert_eq!(eval("\"a\" <= \"b\""), Ok(Value::from(true)));
-    assert_eq!(eval("\"a\" >= \"a\""), Ok(Value::from(true)));
-    assert_eq!(eval("\"a\" <= \"a\""), Ok(Value::from(true)));
-    assert_eq!(eval("\"xa\" > \"xb\""), Ok(Value::from(false)));
-    assert_eq!(eval("\"xa\" < \"xb\""), Ok(Value::from(true)));
-    assert_eq!(eval("\"{}\" != \"{}\""), Ok(Value::from(false)));
-    assert_eq!(eval("\"{}\" == \"{}\""), Ok(Value::from(true)));
+    assert_eq!(eval::<i64, f64>("\"a\" + \"b\""), Ok(Value::from("ab")));
+    assert_eq!(eval::<i64, f64>("\"a\" > \"b\""), Ok(Value::from(false)));
+    assert_eq!(eval::<i64, f64>("\"a\" < \"b\""), Ok(Value::from(true)));
+    assert_eq!(eval::<i64, f64>("\"a\" >= \"b\""), Ok(Value::from(false)));
+    assert_eq!(eval::<i64, f64>("\"a\" <= \"b\""), Ok(Value::from(true)));
+    assert_eq!(eval::<i64, f64>("\"a\" >= \"a\""), Ok(Value::from(true)));
+    assert_eq!(eval::<i64, f64>("\"a\" <= \"a\""), Ok(Value::from(true)));
+    assert_eq!(eval::<i64, f64>("\"xa\" > \"xb\""), Ok(Value::from(false)));
+    assert_eq!(eval::<i64, f64>("\"xa\" < \"xb\""), Ok(Value::from(true)));
+    assert_eq!(eval::<i64, f64>("\"{}\" != \"{}\""), Ok(Value::from(false)));
+    assert_eq!(eval::<i64, f64>("\"{}\" == \"{}\""), Ok(Value::from(true)));
 }
 
 #[test]
 fn test_string_escaping() {
     assert_eq!(
-        eval("\"\\\"str\\\\ing\\\"\""),
+        eval::<i64, f64>("\"\\\"str\\\\ing\\\"\""),
         Ok(Value::from("\"str\\ing\""))
     );
 }
 
 #[test]
 fn test_tuple_definitions() {
-    assert_eq!(eval_empty("()"), Ok(()));
-    assert_eq!(eval_int("(3)"), Ok(3));
+    assert_eq!(eval_empty::<i64, f64>("()"), Ok(()));
+    assert_eq!(eval_int::<i64, f64>("(3)"), Ok(3));
     assert_eq!(
-        eval_tuple("(3, 4)"),
-        Ok(vec![Value::from(3), Value::from(4)])
+        eval_tuple::<i64, f64>("(3, 4)"),
+        Ok(vec![Value::int(3), Value::int(4)])
     );
     assert_eq!(
-        eval_tuple("2, (5, 6)"),
+        eval_tuple::<i64, f64>("2, (5, 6)"),
         Ok(vec![
-            Value::from(2),
-            Value::from(vec![Value::from(5), Value::from(6)])
+            Value::int(2),
+            Value::from(vec![Value::int(5), Value::int(6)])
         ])
     );
-    assert_eq!(eval_tuple("1, 2"), Ok(vec![Value::from(1), Value::from(2)]));
+    assert_eq!(eval_tuple::<i64, f64>("1, 2"), Ok(vec![Value::int(1), Value::int(2)]));
     assert_eq!(
-        eval_tuple("1, 2, 3, 4"),
+        eval_tuple::<i64, f64>("1, 2, 3, 4"),
         Ok(vec![
-            Value::from(1),
-            Value::from(2),
-            Value::from(3),
-            Value::from(4)
-        ])
-    );
-    assert_eq!(
-        eval_tuple("(1, 2, 3), 5, 6, (true, false, 0)"),
-        Ok(vec![
-            Value::from(vec![Value::from(1), Value::from(2), Value::from(3)]),
-            Value::from(5),
-            Value::from(6),
-            Value::from(vec![Value::from(true), Value::from(false), Value::from(0)])
+            Value::int(1),
+            Value::int(2),
+            Value::int(3),
+            Value::int(4)
         ])
     );
     assert_eq!(
-        eval_tuple("1, (2)"),
-        Ok(vec![Value::from(1), Value::from(2)])
+        eval_tuple::<i64, f64>("(1, 2, 3), 5, 6, (true, false, 0)"),
+        Ok(vec![
+            Value::from(vec![Value::int(1), Value::int(2), Value::int(3)]),
+            Value::int(5),
+            Value::int(6),
+            Value::from(vec![Value::from(true), Value::from(false), Value::int(0)])
+        ])
     );
     assert_eq!(
-        eval_tuple("1, ()"),
-        Ok(vec![Value::from(1), Value::from(())])
+        eval_tuple::<i64, f64>("1, (2)"),
+        Ok(vec![Value::int(1), Value::int(2)])
     );
     assert_eq!(
-        eval_tuple("1, ((2))"),
-        Ok(vec![Value::from(1), Value::from(2)])
+        eval_tuple::<i64, f64>("1, ()"),
+        Ok(vec![Value::int(1), Value::from(())])
+    );
+    assert_eq!(
+        eval_tuple::<i64, f64>("1, ((2))"),
+        Ok(vec![Value::int(1), Value::int(2)])
     );
 }
 
 #[test]
 fn test_implicit_context() {
     assert_eq!(
-        eval("a = 2 + 4 * 2; b = -5 + 3 * 5; a == b"),
+        eval::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5; a == b"),
         Ok(Value::from(true))
     );
     assert_eq!(
-        eval_boolean("a = 2 + 4 * 2; b = -5 + 3 * 5; a == b"),
+        eval_boolean::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5; a == b"),
         Ok(true)
     );
-    assert_eq!(eval_int("a = 2 + 4 * 2; b = -5 + 3 * 5; a - b"), Ok(0));
+    assert_eq!(eval_int::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5; a - b"), Ok(0));
     assert_eq!(
-        eval_float("a = 2 + 4 * 2; b = -5 + 3 * 5; a - b + 0.5"),
+        eval_float::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5; a - b + 0.5"),
         Ok(0.5)
     );
-    assert_eq!(eval_number("a = 2 + 4 * 2; b = -5 + 3 * 5; a - b"), Ok(0.0));
-    assert_eq!(eval_empty("a = 2 + 4 * 2; b = -5 + 3 * 5;"), Ok(()));
+    assert_eq!(eval_number::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5; a - b"), Ok(0.0));
+    assert_eq!(eval_empty::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5;"), Ok(()));
     assert_eq!(
-        eval_tuple("a = 2 + 4 * 2; b = -5 + 3 * 5; a, b + 0.5"),
-        Ok(vec![Value::from(10), Value::from(10.5)])
+        eval_tuple::<i64, f64>("a = 2 + 4 * 2; b = -5 + 3 * 5; a, b + 0.5"),
+        Ok(vec![Value::int(10), Value::float(10.5)])
     );
     assert_eq!(
-        eval_string("a = \"xyz\"; b = \"abc\"; c = a + b; c"),
+        eval_string::<i64, f64>("a = \"xyz\"; b = \"abc\"; c = a + b; c"),
         Ok("xyzabc".to_string())
     );
 }
 
 #[test]
 fn test_operator_assignments() {
-    let mut context = HashMapContext::new();
+    let mut context: HashMapContext<i64, f64> = HashMapContext::new();
     assert_eq!(eval_empty_with_context_mut("a = 5", &mut context), Ok(()));
     assert_eq!(eval_empty_with_context_mut("a += 5", &mut context), Ok(()));
     assert_eq!(eval_empty_with_context_mut("a -= 5", &mut context), Ok(()));
@@ -1402,14 +1402,14 @@ fn test_type_errors_in_binary_operators() {
     // Only addition supports incompatible types, all others work only on numbers or only on booleans.
     // So only addition requires the more fancy error message.
     assert_eq!(
-        eval("4 + \"abc\""),
+        eval::<i64, f64>("4 + \"abc\""),
         Err(EvalexprError::wrong_type_combination(
             Operator::Add,
             vec![ValueType::Int, ValueType::String]
         ))
     );
     assert_eq!(
-        eval("\"abc\" + 4"),
+        eval::<i64, f64>("\"abc\" + 4"),
         Err(EvalexprError::wrong_type_combination(
             Operator::Add,
             vec![ValueType::String, ValueType::Int]
@@ -1420,16 +1420,16 @@ fn test_type_errors_in_binary_operators() {
 #[test]
 fn test_empty_context() {
     let context = EmptyContext;
-    assert_eq!(context.get_value("abc"), None);
+    assert_eq!(Context::<i64, f64>::get_value(&context, "abc"), None);
     assert_eq!(
-        context.call_function("abc", &Value::Empty),
+        context.call_function("abc", &Value::<i64, f64>::Empty),
         Err(EvalexprError::FunctionIdentifierNotFound("abc".to_owned()))
     );
 }
 
 #[test]
 fn test_hashmap_context_type_safety() {
-    let mut context = context_map! {"a" => 5, "b" => 5.0}.unwrap();
+    let mut context = context_map! {"a" => Value::int(5), "b" => Value::float(5.0)}.unwrap();
     assert_eq!(
         eval_with_context_mut("a = 4", &mut context),
         Ok(Value::Empty)
@@ -1566,13 +1566,13 @@ fn test_hashmap_context_clone_debug() {
 #[test]
 fn test_error_constructors() {
     assert_eq!(
-        eval("a = true + \"4\""),
+        eval::<i64, f64>("a = true + \"4\""),
         Err(EvalexprError::ExpectedNumberOrString {
             actual: Value::Boolean(true)
         })
     );
     assert_eq!(
-        eval("a = true && \"4\""),
+        eval::<i64, f64>("a = true && \"4\""),
         Err(EvalexprError::ExpectedBoolean {
             actual: Value::from("4")
         })
@@ -1597,7 +1597,7 @@ fn test_error_constructors() {
         })
     );
     assert_eq!(
-        eval("&"),
+        eval::<i64, f64>("&"),
         Err(EvalexprError::UnmatchedPartialToken {
             first: PartialToken::Ampersand,
             second: None
@@ -1616,7 +1616,7 @@ fn test_error_constructors() {
 
 #[test]
 fn test_iterators() {
-    let tree = build_operator_tree("writevar = 5 + 3 + fun(4) + var").unwrap();
+    let tree = build_operator_tree::<i64, f64>("writevar = 5 + 3 + fun(4) + var").unwrap();
     let mut iter = tree.iter_identifiers();
     assert_eq!(iter.next(), Some("writevar"));
     assert_eq!(iter.next(), Some("fun"));
@@ -1645,18 +1645,18 @@ fn test_iterators() {
 fn test_same_operator_chains() {
     #![allow(clippy::eq_op)]
     assert_eq!(
-        eval("3.0 / 3.0 / 3.0 / 3.0"),
+        eval::<i64, f64>("3.0 / 3.0 / 3.0 / 3.0"),
         Ok(Value::from(3.0 / 3.0 / 3.0 / 3.0))
     );
     assert_eq!(
-        eval("3.0 - 3.0 - 3.0 - 3.0"),
+        eval::<i64, f64>("3.0 - 3.0 - 3.0 - 3.0"),
         Ok(Value::from(3.0 - 3.0 - 3.0 - 3.0))
     );
 }
 
 #[test]
 fn test_long_expression_i89() {
-    let tree = build_operator_tree(
+    let tree = build_operator_tree::<i64, f64>(
         "x*0.2*5/4+x*2*4*1*1*1*1*1*1*1+7*math::sin(y)-z/math::sin(3.0/2.0/(1-x*4*1*1*1*1))",
     )
     .unwrap();
@@ -1673,7 +1673,7 @@ fn test_long_expression_i89() {
         + x * 2.0 * 4.0 * 1.0 * 1.0 * 1.0 * 1.0 * 1.0 * 1.0 * 1.0
         + 7.0 * y.sin()
         - z / (3.0 / 2.0 / (1.0 - x * 4.0 * 1.0 * 1.0 * 1.0 * 1.0)).sin();
-    let actual = tree.eval_float_with_context(&context).unwrap();
+    let actual = tree.eval_float_with_context::<_, i64, f64>(&context).unwrap();
     assert!(
         (expected - actual).abs() < expected.abs().min(actual.abs()) * 1e-12,
         "expected: {}, actual: {}",
@@ -1865,19 +1865,19 @@ fn test_value_type() {
 fn test_parenthese_combinations() {
     // These are from issue #94
     assert_eq!(
-        eval("123(1*2)"),
+        eval::<i64, f64>("123(1*2)"),
         Err(EvalexprError::MissingOperatorOutsideOfBrace)
     );
     assert_eq!(
-        eval("1()"),
+        eval::<i64, f64>("1()"),
         Err(EvalexprError::MissingOperatorOutsideOfBrace)
     );
     assert_eq!(
-        eval("1()()()()"),
+        eval::<i64, f64>("1()()()()"),
         Err(EvalexprError::MissingOperatorOutsideOfBrace)
     );
     assert_eq!(
-        eval("1()()()(9)()()"),
+        eval::<i64, f64>("1()()()(9)()()"),
         Err(EvalexprError::MissingOperatorOutsideOfBrace)
     );
     assert_eq!(
@@ -1895,13 +1895,13 @@ fn test_try_from() {
     let value = Value::String("abc".to_string());
     assert_eq!(String::try_from(value.clone()), Ok("abc".to_string()));
     assert_eq!(
-        FloatType::try_from(value.clone()),
+        f64::try_from(value.clone()),
         Err(EvalexprError::ExpectedFloat {
             actual: value.clone()
         })
     );
     assert_eq!(
-        IntType::try_from(value.clone()),
+        i64::try_from(value.clone()),
         Err(EvalexprError::ExpectedInt {
             actual: value.clone()
         })
@@ -1932,9 +1932,9 @@ fn test_try_from() {
             actual: value.clone()
         })
     );
-    assert_eq!(FloatType::try_from(value.clone()), Ok(1.3));
+    assert_eq!(f64::try_from(value.clone()), Ok(1.3));
     assert_eq!(
-        IntType::try_from(value.clone()),
+        i64::try_from(value.clone()),
         Err(EvalexprError::ExpectedInt {
             actual: value.clone()
         })
@@ -1966,12 +1966,12 @@ fn test_try_from() {
         })
     );
     assert_eq!(
-        FloatType::try_from(value.clone()),
+        f64::try_from(value.clone()),
         Err(EvalexprError::ExpectedFloat {
             actual: value.clone()
         })
     );
-    assert_eq!(IntType::try_from(value.clone()), Ok(13));
+    assert_eq!(i64::try_from(value.clone()), Ok(13));
     assert_eq!(
         bool::try_from(value.clone()),
         Err(EvalexprError::ExpectedBoolean {
@@ -1999,13 +1999,13 @@ fn test_try_from() {
         })
     );
     assert_eq!(
-        FloatType::try_from(value.clone()),
+        f64::try_from(value.clone()),
         Err(EvalexprError::ExpectedFloat {
             actual: value.clone()
         })
     );
     assert_eq!(
-        IntType::try_from(value.clone()),
+        i64::try_from(value.clone()),
         Err(EvalexprError::ExpectedInt {
             actual: value.clone()
         })
@@ -2032,13 +2032,13 @@ fn test_try_from() {
         })
     );
     assert_eq!(
-        FloatType::try_from(value.clone()),
+        f64::try_from(value.clone()),
         Err(EvalexprError::ExpectedFloat {
             actual: value.clone()
         })
     );
     assert_eq!(
-        IntType::try_from(value.clone()),
+        i64::try_from(value.clone()),
         Err(EvalexprError::ExpectedInt {
             actual: value.clone()
         })
@@ -2068,13 +2068,13 @@ fn test_try_from() {
         })
     );
     assert_eq!(
-        FloatType::try_from(value.clone()),
+        f64::try_from(value.clone()),
         Err(EvalexprError::ExpectedFloat {
             actual: value.clone()
         })
     );
     assert_eq!(
-        IntType::try_from(value.clone()),
+        i64::try_from(value.clone()),
         Err(EvalexprError::ExpectedInt {
             actual: value.clone()
         })
@@ -2096,7 +2096,7 @@ fn test_try_from() {
 
 #[test]
 fn assignment_lhs_is_identifier() {
-    let tree = build_operator_tree("a = 1").unwrap();
+    let tree = build_operator_tree::<i64, f64>("a = 1").unwrap();
     let operators: Vec<_> = tree.iter().map(|node| node.operator().clone()).collect();
 
     let mut context = HashMapContext::new();

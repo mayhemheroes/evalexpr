@@ -1,9 +1,9 @@
-use std::fmt;
+use std::fmt::Display;
 
 use crate::token::{PartialToken, Token};
 
-impl fmt::Display for Token {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+impl<IntType: Display, FloatType: Display> Display for Token<IntType, FloatType> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         use self::Token::*;
         match self {
             Plus => write!(f, "+"),
@@ -48,13 +48,13 @@ impl fmt::Display for Token {
             Float(float) => float.fmt(f),
             Int(int) => int.fmt(f),
             Boolean(boolean) => boolean.fmt(f),
-            String(string) => fmt::Debug::fmt(string, f),
+            String(string) => std::fmt::Debug::fmt(string, f),
         }
     }
 }
 
-impl fmt::Display for PartialToken {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+impl<IntType: Display, FloatType: Display> Display for PartialToken<IntType, FloatType> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         use self::PartialToken::*;
         match self {
             Token(token) => token.fmt(f),

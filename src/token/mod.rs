@@ -1,12 +1,13 @@
+use std::fmt::Display;
+use std::str::FromStr;
 use crate::{
     error::{EvalexprError, EvalexprResult},
-    value::{FloatType, IntType},
 };
 
 mod display;
 
 #[derive(Clone, PartialEq, Debug)]
-pub enum Token {
+pub enum Token<IntType = i64, FloatType = f64> {
     // Arithmetic
     Plus,
     Minus,
@@ -55,9 +56,9 @@ pub enum Token {
 
 /// A partial token is an input character whose meaning depends on the characters around it.
 #[derive(Clone, Debug, PartialEq)]
-pub enum PartialToken {
+pub enum PartialToken<IntType = i64, FloatType = f64> {
     /// A partial token that unambiguously maps to a single token.
-    Token(Token),
+    Token(Token<IntType, FloatType>),
     /// A partial token that is a literal.
     Literal(String),
     /// A plus character '+'.
@@ -89,7 +90,7 @@ pub enum PartialToken {
 }
 
 // Make this a const fn as soon as is_whitespace and to_string get stable (issue #57563)
-fn char_to_partial_token(c: char) -> PartialToken {
+fn char_to_partial_token<IntType, FloatType>(c: char) -> PartialToken<IntType, FloatType> {
     match c {
         '+' => PartialToken::Plus,
         '-' => PartialToken::Minus,
@@ -121,7 +122,7 @@ fn char_to_partial_token(c: char) -> PartialToken {
     }
 }
 
-impl Token {
+impl<IntType, FloatType> Token<IntType, FloatType> {
     #[cfg(not(tarpaulin_include))]
     pub(crate) const fn is_leftsided_value(&self) -> bool {
         match self {
@@ -229,7 +230,7 @@ impl Token {
 }
 
 /// Parses an escape sequence within a string literal.
-fn parse_escape_sequence<Iter: Iterator<Item = char>>(iter: &mut Iter) -> EvalexprResult<char> {
+fn parse_escape_sequence<Iter: Iterator<Item = char>, IntType, FloatType>(iter: &mut Iter) -> EvalexprResult<char, IntType, FloatType> {
     match iter.next() {
         Some('"') => Ok('"'),
         Some('\\') => Ok('\\'),
@@ -244,9 +245,9 @@ fn parse_escape_sequence<Iter: Iterator<Item = char>>(iter: &mut Iter) -> Evalex
 /// The string is terminated by a double quote `"`.
 /// Occurrences of `"` within the string can be escaped with `\`.
 /// The backslash needs to be escaped with another backslash `\`.
-fn parse_string_literal<Iter: Iterator<Item = char>>(
+fn parse_string_literal<Iter: Iterator<Item = char>, IntType, FloatType>(
     mut iter: &mut Iter,
-) -> EvalexprResult<PartialToken> {
+) -> EvalexprResult<PartialToken<IntType, FloatType>, IntType, FloatType> {
     let mut result = String::new();
 
     while let Some(c) = iter.next() {
@@ -261,7 +262,7 @@ fn parse_string_literal<Iter: Iterator<Item = char>>(
 }
 
 /// Converts a string to a vector of partial tokens.
-fn str_to_partial_tokens(string: &str) -> EvalexprResult<Vec<PartialToken>> {
+fn str_to_partial_tokens<IntType, FloatType>(string: &str) -> EvalexprResult<Vec<PartialToken<IntType, FloatType>>, IntType, FloatType> {
     let mut result = Vec::new();
     let mut iter = string.chars().peekable();
 
@@ -290,7 +291,7 @@ fn str_to_partial_tokens(string: &str) -> EvalexprResult<Vec<PartialToken>> {
 }
 
 /// Resolves all partial tokens by converting them to complex tokens.
-fn partial_tokens_to_tokens(mut tokens: &[PartialToken]) -> EvalexprResult<Vec<Token>> {
+fn partial_tokens_to_tokens<IntType: FromStr + Clone + PartialEq + Display, FloatType: FromStr + Clone + PartialEq + Display>(mut tokens: &[PartialToken<IntType, FloatType>]) -> EvalexprResult<Vec<Token<IntType, FloatType>>, IntType, FloatType> {
     let mut result = Vec::new();
     while !tokens.is_empty() {
         let first = tokens[0].clone();
@@ -438,7 +439,7 @@ fn partial_tokens_to_tokens(mut tokens: &[PartialToken]) -> EvalexprResult<Vec<T
     Ok(result)
 }
 
-pub(crate) fn tokenize(string: &str) -> EvalexprResult<Vec<Token>> {
+pub(crate) fn tokenize<IntType: FromStr + Clone + PartialEq + Display, FloatType: FromStr + Clone + PartialEq + Display>(string: &str) -> EvalexprResult<Vec<Token<IntType, FloatType>>, IntType, FloatType> {
     partial_tokens_to_tokens(&str_to_partial_tokens(string)?)
 }
 
@@ -456,7 +457,7 @@ mod tests {
         for char in chars {
             assert_eq!(
                 format!("{}", char),
-                format!("{}", char_to_partial_token(char))
+                format!("{}", char_to_partial_token::<i64, f64>(char))
             );
         }
     }
@@ -465,7 +466,7 @@ mod tests {
     fn test_token_display() {
         let token_string =
             "+ - * / % ^ == != > < >= <= && || ! ( ) = += -= *= /= %= ^= &&= ||= , ; ";
-        let tokens = tokenize(token_string).unwrap();
+        let tokens = tokenize::<i64, f64>(token_string).unwrap();
         let mut result_string = String::new();
 
         for token in tokens {
@@ -477,7 +478,7 @@ mod tests {
 
     #[test]
     fn assignment_lhs_is_identifier() {
-        let tokens = tokenize("a = 1").unwrap();
+        let tokens = tokenize::<i64, f64>("a = 1").unwrap();
         assert_eq!(
             tokens.as_slice(),
             [

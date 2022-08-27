@@ -2,12 +2,13 @@ use crate::function::builtin::builtin_function;
 
 use crate::{context::Context, error::*, value::Value, ContextWithMutableVariables};
 use std::borrow::Borrow;
+use crate::value::numeric_types::{Float, Integer};
 
 mod display;
 
 /// An enum that represents operators in the operator tree.
 #[derive(Debug, PartialEq, Clone)]
-pub enum Operator {
+pub enum Operator<IntType = i64, FloatType = f64> {
     /// A root node in the operator tree.
     /// The whole expression is stored under a root node, as well as each subexpression surrounded by parentheses.
     RootNode,
@@ -73,7 +74,7 @@ pub enum Operator {
     /// A constant value.
     Const {
         /** The value of the constant. */
-        value: Value,
+        value: Value<IntType, FloatType>,
     },
     /// A write to a variable identifier.
     VariableIdentifierWrite {
@@ -92,8 +93,8 @@ pub enum Operator {
     },
 }
 
-impl Operator {
-    pub(crate) fn value(value: Value) -> Self {
+impl<IntType, FloatType> Operator<IntType, FloatType> {
+    pub(crate) fn value(value: Value<IntType, FloatType>) -> Self {
         Operator::Const { value }
     }
 
@@ -172,13 +173,15 @@ impl Operator {
             FunctionIdentifier { .. } => Some(1),
         }
     }
+}
 
+impl<IntType: Integer<FloatType>, FloatType: Float<IntType>> Operator<IntType, FloatType> {
     /// Evaluates the operator with the given arguments and context.
-    pub(crate) fn eval<C: Context>(
+    pub(crate) fn eval<C: Context<IntType, FloatType>>(
         &self,
-        arguments: &[Value],
+        arguments: &[Value<IntType, FloatType>],
         context: &C,
-    ) -> EvalexprResult<Value> {
+    ) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
         use crate::operator::Operator::*;
         match self {
             RootNode => {
@@ -199,7 +202,7 @@ impl Operator {
                     result.push_str(&b);
                     Ok(Value::String(result))
                 } else if let (Ok(a), Ok(b)) = (arguments[0].as_int(), arguments[1].as_int()) {
-                    let result = a.checked_add(b);
+                    let result = a.checked_add(&b);
                     if let Some(result) = result {
                         Ok(Value::Int(result))
                     } else {
@@ -224,7 +227,7 @@ impl Operator {
                 arguments[1].as_number()?;
 
                 if let (Ok(a), Ok(b)) = (arguments[0].as_int(), arguments[1].as_int()) {
-                    let result = a.checked_sub(b);
+                    let result = a.checked_sub(&b);
                     if let Some(result) = result {
                         Ok(Value::Int(result))
                     } else {
@@ -260,7 +263,7 @@ impl Operator {
                 arguments[1].as_number()?;
 
                 if let (Ok(a), Ok(b)) = (arguments[0].as_int(), arguments[1].as_int()) {
-                    let result = a.checked_mul(b);
+                    let result = a.checked_mul(&b);
                     if let Some(result) = result {
                         Ok(Value::Int(result))
                     } else {
@@ -281,7 +284,7 @@ impl Operator {
                 arguments[1].as_number()?;
 
                 if let (Ok(a), Ok(b)) = (arguments[0].as_int(), arguments[1].as_int()) {
-                    let result = a.checked_div(b);
+                    let result = a.checked_div(&b);
                     if let Some(result) = result {
                         Ok(Value::Int(result))
                     } else {
@@ -302,7 +305,7 @@ impl Operator {
                 arguments[1].as_number()?;
 
                 if let (Ok(a), Ok(b)) = (arguments[0].as_int(), arguments[1].as_int()) {
-                    let result = a.checked_rem(b);
+                    let result = a.checked_rem(&b);
                     if let Some(result) = result {
                         Ok(Value::Int(result))
                     } else {
@@ -323,7 +326,7 @@ impl Operator {
                 arguments[1].as_number()?;
 
                 Ok(Value::Float(
-                    arguments[0].as_number()?.powf(arguments[1].as_number()?),
+                    arguments[0].as_number()?.pow(&arguments[1].as_number()?),
                 ))
             },
             Eq => {
@@ -468,11 +471,11 @@ impl Operator {
     }
 
     /// Evaluates the operator with the given arguments and mutable context.
-    pub(crate) fn eval_mut<C: ContextWithMutableVariables>(
+    pub(crate) fn eval_mut<C: ContextWithMutableVariables<IntType, FloatType>>(
         &self,
-        arguments: &[Value],
+        arguments: &[Value<IntType, FloatType>],
         context: &mut C,
-    ) -> EvalexprResult<Value> {
+    ) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
         use crate::operator::Operator::*;
         match self {
             Assign => {
@@ -503,7 +506,7 @@ impl Operator {
                     AndAssign => Operator::And.eval(&arguments, context),
                     OrAssign => Operator::Or.eval(&arguments, context),
                     _ => unreachable!(
-                        "Forgot to add a match arm for an assign operation: {}",
+                        "Forgot to add a match arm for an assign operation: {:?}",
                         self
                     ),
                 }?;

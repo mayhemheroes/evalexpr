@@ -1,7 +1,10 @@
+use std::fmt::Display;
+use std::str::FromStr;
 use crate::{
     token, tree, value::TupleType, Context, ContextWithMutableVariables, EmptyType, EvalexprError,
-    EvalexprResult, FloatType, HashMapContext, IntType, Node, Value, EMPTY_VALUE,
+    EvalexprResult, HashMapContext, Node, Value, EMPTY_VALUE,
 };
+use crate::value::numeric_types::{Float, Integer};
 
 /// Evaluate the given expression string.
 ///
@@ -14,7 +17,7 @@ use crate::{
 /// ```
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval(string: &str) -> EvalexprResult<Value> {
+pub fn eval<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
     eval_with_context_mut(string, &mut HashMapContext::new())
 }
 
@@ -33,7 +36,7 @@ pub fn eval(string: &str) -> EvalexprResult<Value> {
 /// ```
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<Value> {
+pub fn eval_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
     tree::tokens_to_operator_tree(token::tokenize(string)?)?.eval_with_context(context)
 }
 
@@ -52,10 +55,10 @@ pub fn eval_with_context<C: Context>(string: &str, context: &C) -> EvalexprResul
 /// ```
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<Value> {
+) -> EvalexprResult<Value<IntType, FloatType>, IntType, FloatType> {
     tree::tokens_to_operator_tree(token::tokenize(string)?)?.eval_with_context_mut(context)
 }
 
@@ -83,28 +86,28 @@ pub fn eval_with_context_mut<C: ContextWithMutableVariables>(
 /// ```
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn build_operator_tree(string: &str) -> EvalexprResult<Node> {
+pub fn build_operator_tree<IntType: FromStr+ Clone + PartialEq + Display, FloatType: FromStr+Clone+PartialEq+Display>(string: &str) -> EvalexprResult<Node<IntType, FloatType>, IntType, FloatType> {
     tree::tokens_to_operator_tree(token::tokenize(string)?)
 }
 
 /// Evaluate the given expression string into a string.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_string(string: &str) -> EvalexprResult<String> {
+pub fn eval_string<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<String, IntType, FloatType> {
     eval_string_with_context_mut(string, &mut HashMapContext::new())
 }
 
 /// Evaluate the given expression string into an integer.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_int(string: &str) -> EvalexprResult<IntType> {
+pub fn eval_int<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<IntType, IntType, FloatType> {
     eval_int_with_context_mut(string, &mut HashMapContext::new())
 }
 
 /// Evaluate the given expression string into a float.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_float(string: &str) -> EvalexprResult<FloatType> {
+pub fn eval_float<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<FloatType, IntType, FloatType> {
     eval_float_with_context_mut(string, &mut HashMapContext::new())
 }
 
@@ -112,35 +115,35 @@ pub fn eval_float(string: &str) -> EvalexprResult<FloatType> {
 /// If the result of the expression is an integer, it is silently converted into a float.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_number(string: &str) -> EvalexprResult<FloatType> {
+pub fn eval_number<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<FloatType, IntType, FloatType> {
     eval_number_with_context_mut(string, &mut HashMapContext::new())
 }
 
 /// Evaluate the given expression string into a boolean.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_boolean(string: &str) -> EvalexprResult<bool> {
+pub fn eval_boolean<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<bool, IntType, FloatType> {
     eval_boolean_with_context_mut(string, &mut HashMapContext::new())
 }
 
 /// Evaluate the given expression string into a tuple.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_tuple(string: &str) -> EvalexprResult<TupleType> {
+pub fn eval_tuple<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<TupleType<IntType, FloatType>, IntType, FloatType> {
     eval_tuple_with_context_mut(string, &mut HashMapContext::new())
 }
 
 /// Evaluate the given expression string into an empty value.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_empty(string: &str) -> EvalexprResult<EmptyType> {
+pub fn eval_empty<IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str) -> EvalexprResult<EmptyType, IntType, FloatType> {
     eval_empty_with_context_mut(string, &mut HashMapContext::new())
 }
 
 /// Evaluate the given expression string into a string with the given context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_string_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<String> {
+pub fn eval_string_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<String, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::String(string)) => Ok(string),
         Ok(value) => Err(EvalexprError::expected_string(value)),
@@ -151,7 +154,7 @@ pub fn eval_string_with_context<C: Context>(string: &str, context: &C) -> Evalex
 /// Evaluate the given expression string into an integer with the given context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_int_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<IntType> {
+pub fn eval_int_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<IntType, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::Int(int)) => Ok(int),
         Ok(value) => Err(EvalexprError::expected_int(value)),
@@ -162,7 +165,7 @@ pub fn eval_int_with_context<C: Context>(string: &str, context: &C) -> EvalexprR
 /// Evaluate the given expression string into a float with the given context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_float_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<FloatType> {
+pub fn eval_float_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<FloatType, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::Float(float)) => Ok(float),
         Ok(value) => Err(EvalexprError::expected_float(value)),
@@ -174,13 +177,13 @@ pub fn eval_float_with_context<C: Context>(string: &str, context: &C) -> Evalexp
 /// If the result of the expression is an integer, it is silently converted into a float.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_number_with_context<C: Context>(
+pub fn eval_number_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &C,
-) -> EvalexprResult<FloatType> {
+) -> EvalexprResult<FloatType, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::Float(float)) => Ok(float),
-        Ok(Value::Int(int)) => Ok(int as FloatType),
+        Ok(Value::Int(int)) => Ok(int.as_float()),
         Ok(value) => Err(EvalexprError::expected_number(value)),
         Err(error) => Err(error),
     }
@@ -189,7 +192,7 @@ pub fn eval_number_with_context<C: Context>(
 /// Evaluate the given expression string into a boolean with the given context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_boolean_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<bool> {
+pub fn eval_boolean_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<bool, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::Boolean(boolean)) => Ok(boolean),
         Ok(value) => Err(EvalexprError::expected_boolean(value)),
@@ -200,7 +203,7 @@ pub fn eval_boolean_with_context<C: Context>(string: &str, context: &C) -> Evale
 /// Evaluate the given expression string into a tuple with the given context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_tuple_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<TupleType> {
+pub fn eval_tuple_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<TupleType<IntType, FloatType>, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::Tuple(tuple)) => Ok(tuple),
         Ok(value) => Err(EvalexprError::expected_tuple(value)),
@@ -211,7 +214,7 @@ pub fn eval_tuple_with_context<C: Context>(string: &str, context: &C) -> Evalexp
 /// Evaluate the given expression string into an empty value with the given context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_empty_with_context<C: Context>(string: &str, context: &C) -> EvalexprResult<EmptyType> {
+pub fn eval_empty_with_context<C: Context<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(string: &str, context: &C) -> EvalexprResult<EmptyType, IntType, FloatType> {
     match eval_with_context(string, context) {
         Ok(Value::Empty) => Ok(EMPTY_VALUE),
         Ok(value) => Err(EvalexprError::expected_empty(value)),
@@ -222,10 +225,10 @@ pub fn eval_empty_with_context<C: Context>(string: &str, context: &C) -> Evalexp
 /// Evaluate the given expression string into a string with the given mutable context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_string_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_string_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<String> {
+) -> EvalexprResult<String, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::String(string)) => Ok(string),
         Ok(value) => Err(EvalexprError::expected_string(value)),
@@ -236,10 +239,10 @@ pub fn eval_string_with_context_mut<C: ContextWithMutableVariables>(
 /// Evaluate the given expression string into an integer with the given mutable context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_int_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_int_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<IntType> {
+) -> EvalexprResult<IntType, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::Int(int)) => Ok(int),
         Ok(value) => Err(EvalexprError::expected_int(value)),
@@ -250,10 +253,10 @@ pub fn eval_int_with_context_mut<C: ContextWithMutableVariables>(
 /// Evaluate the given expression string into a float with the given mutable context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_float_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_float_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<FloatType> {
+) -> EvalexprResult<FloatType, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::Float(float)) => Ok(float),
         Ok(value) => Err(EvalexprError::expected_float(value)),
@@ -265,13 +268,13 @@ pub fn eval_float_with_context_mut<C: ContextWithMutableVariables>(
 /// If the result of the expression is an integer, it is silently converted into a float.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_number_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_number_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<FloatType> {
+) -> EvalexprResult<FloatType, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::Float(float)) => Ok(float),
-        Ok(Value::Int(int)) => Ok(int as FloatType),
+        Ok(Value::Int(int)) => Ok(int.as_float()),
         Ok(value) => Err(EvalexprError::expected_number(value)),
         Err(error) => Err(error),
     }
@@ -280,10 +283,10 @@ pub fn eval_number_with_context_mut<C: ContextWithMutableVariables>(
 /// Evaluate the given expression string into a boolean with the given mutable context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_boolean_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_boolean_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<bool> {
+) -> EvalexprResult<bool, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::Boolean(boolean)) => Ok(boolean),
         Ok(value) => Err(EvalexprError::expected_boolean(value)),
@@ -294,10 +297,10 @@ pub fn eval_boolean_with_context_mut<C: ContextWithMutableVariables>(
 /// Evaluate the given expression string into a tuple with the given mutable context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_tuple_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_tuple_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<TupleType> {
+) -> EvalexprResult<TupleType<IntType, FloatType>, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::Tuple(tuple)) => Ok(tuple),
         Ok(value) => Err(EvalexprError::expected_tuple(value)),
@@ -308,10 +311,10 @@ pub fn eval_tuple_with_context_mut<C: ContextWithMutableVariables>(
 /// Evaluate the given expression string into an empty value with the given mutable context.
 ///
 /// *See the [crate doc](index.html) for more examples and explanations of the expression format.*
-pub fn eval_empty_with_context_mut<C: ContextWithMutableVariables>(
+pub fn eval_empty_with_context_mut<C: ContextWithMutableVariables<IntType, FloatType>, IntType: 'static + Integer<FloatType>, FloatType: 'static + Float<IntType>>(
     string: &str,
     context: &mut C,
-) -> EvalexprResult<EmptyType> {
+) -> EvalexprResult<EmptyType, IntType, FloatType> {
     match eval_with_context_mut(string, context) {
         Ok(Value::Empty) => Ok(EMPTY_VALUE),
         Ok(value) => Err(EvalexprError::expected_empty(value)),

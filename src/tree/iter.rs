@@ -2,20 +2,20 @@ use crate::Node;
 use std::slice::Iter;
 
 /// An iterator that traverses an operator tree in pre-order.
-pub struct NodeIter<'a> {
-    stack: Vec<Iter<'a, Node>>,
+pub struct NodeIter<'a, IntType, FloatType> {
+    stack: Vec<Iter<'a, Node<IntType, FloatType>>>,
 }
 
-impl<'a> NodeIter<'a> {
-    fn new(node: &'a Node) -> Self {
-        NodeIter {
+impl<'a, IntType, FloatType> NodeIter<'a, IntType, FloatType> {
+    fn new(node: &'a Node<IntType, FloatType>) -> Self {
+        Self {
             stack: vec![node.children.iter()],
         }
     }
 }
 
-impl<'a> Iterator for NodeIter<'a> {
-    type Item = &'a Node;
+impl<'a, IntType, FloatType> Iterator for NodeIter<'a, IntType, FloatType> {
+    type Item = &'a Node<IntType, FloatType>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -41,9 +41,9 @@ impl<'a> Iterator for NodeIter<'a> {
     }
 }
 
-impl Node {
+impl<IntType, FloatType> Node<IntType, FloatType> {
     /// Returns an iterator over all nodes in this tree.
-    pub fn iter(&self) -> impl Iterator<Item = &Node> {
+    pub fn iter(&self) -> impl Iterator<Item = &Node<IntType, FloatType>> {
         NodeIter::new(self)
     }
 }

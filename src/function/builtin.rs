@@ -2,50 +2,52 @@
 use regex::Regex;
 
 use crate::{
-    value::{FloatType, IntType},
-    EvalexprError, Function, Value, ValueType,
+    EvalexprError, Function, Value, ValueType, TupleType,
 };
-use std::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
+use crate::value::numeric_types::{Float, Integer};
 
 macro_rules! simple_math {
     ($func:ident) => {
         Some(Function::new(|argument| {
-            let num = argument.as_number()?;
+            let num: FloatType = argument.as_number()?;
             Ok(Value::Float(num.$func()))
         }))
     };
     ($func:ident, 2) => {
         Some(Function::new(|argument| {
-            let tuple = argument.as_fixed_len_tuple(2)?;
+            let tuple: TupleType<IntType, FloatType> = argument.as_fixed_len_tuple(2)?;
             let (a, b) = (tuple[0].as_number()?, tuple[1].as_number()?);
-            Ok(Value::Float(a.$func(b)))
+            Ok(Value::Float(a.$func(&b)))
         }))
     };
 }
 
-fn float_is(func: fn(f64) -> bool) -> Option<Function> {
-    Some(Function::new(move |argument| {
-        Ok(func(argument.as_number()?).into())
-    }))
+macro_rules! float_is {
+    ($func:ident) => {
+        Some(Function::new(|argument| {
+            let num: FloatType = argument.as_number()?;
+            Ok(Value::Boolean(num.$func()))
+        }))
+    }
 }
 
 macro_rules! int_function {
     ($func:ident) => {
         Some(Function::new(|argument| {
-            let int = argument.as_int()?;
+            let int: IntType = argument.as_int()?;
             Ok(Value::Int(int.$func()))
         }))
     };
     ($func:ident, 2) => {
         Some(Function::new(|argument| {
-            let tuple = argument.as_fixed_len_tuple(2)?;
+            let tuple: TupleType<IntType, FloatType> = argument.as_fixed_len_tuple(2)?;
             let (a, b) = (tuple[0].as_int()?, tuple[1].as_int()?);
-            Ok(Value::Int(a.$func(b)))
+            Ok(Value::Int(a.$func(&b)))
         }))
     };
 }
 
-pub fn builtin_function(identifier: &str) -> Option<Function> {
+pub fn builtin_function<IntType: Integer<FloatType>, FloatType: Float<IntType>>(identifier: &str) -> Option<Function<IntType, FloatType>> {
     match identifier {
         // Log
         "math::ln" => simple_math!(ln),
@@ -56,7 +58,7 @@ pub fn builtin_function(identifier: &str) -> Option<Function> {
         "math::exp" => simple_math!(exp),
         "math::exp2" => simple_math!(exp2),
         // Pow
-        "math::pow" => simple_math!(powf, 2),
+        "math::pow" => simple_math!(pow, 2),
         // Cos
         "math::cos" => simple_math!(cos),
         "math::acos" => simple_math!(acos),
@@ -83,10 +85,10 @@ pub fn builtin_function(identifier: &str) -> Option<Function> {
         "round" => simple_math!(round),
         "ceil" => simple_math!(ceil),
         // Float special values
-        "math::is_nan" => float_is(f64::is_nan),
-        "math::is_finite" => float_is(f64::is_finite),
-        "math::is_infinite" => float_is(f64::is_infinite),
-        "math::is_normal" => float_is(f64::is_normal),
+        "math::is_nan" => float_is!(is_nan),
+        "math::is_finite" => float_is!(is_finite),
+        "math::is_infinite" => float_is!(is_infinite),
+        "math::is_normal" => float_is!(is_normal),
         // Other
         "typeof" => Some(Function::new(move |argument| {
             Ok(match argument {
@@ -99,48 +101,66 @@ pub fn builtin_function(identifier: &str) -> Option<Function> {
             }
             .into())
         })),
-        "min" => Some(Function::new(|argument| {
+        "min" => Some(Function::new(|argument: &Value<IntType, FloatType>| {
             let arguments = argument.as_tuple()?;
-            let mut min_int = IntType::max_value();
-            let mut min_float = 1.0f64 / 0.0f64;
-            debug_assert!(min_float.is_infinite());
+            let min_int = IntType::min_value();
+            let min_float = FloatType::min_value();
+            let mut min_int = min_int.as_ref();
+            let mut min_float = min_float.as_ref();
 
-            for argument in arguments {
+            for argument in &arguments {
                 if let Value::Float(float) = argument {
-                    min_float = min_float.min(float);
+                    min_float = min_float.map(|this| this.min(float));
                 } else if let Value::Int(int) = argument {
-                    min_int = min_int.min(int);
+                    min_int = min_int.map(|this|this.min(int));
                 } else {
-                    return Err(EvalexprError::expected_number(argument));
+                    return Err(EvalexprError::expected_number(argument.clone()));
                 }
             }
 
-            if (min_int as FloatType) < min_float {
-                Ok(Value::Int(min_int))
+            if let (Some(min_int), Some(min_float)) = (min_int, min_float) {
+                if &min_int.as_float() < min_float {
+                    Ok(Value::Int(min_int.clone()))
+                } else {
+                    Ok(Value::Float(min_float.clone()))
+                }
+            } else if let Some(min_int) = min_int {
+                Ok(Value::Int(min_int.clone()))
+            } else if let Some(min_float) = min_float {
+                Ok(Value::Float(min_float.clone()))
             } else {
-                Ok(Value::Float(min_float))
-            }
+                Err(EvalexprError::NoMinValue)
+            }         
         })),
-        "max" => Some(Function::new(|argument| {
+        "max" => Some(Function::new(|argument: &Value<IntType, FloatType>| {
             let arguments = argument.as_tuple()?;
-            let mut max_int = IntType::min_value();
-            let mut max_float = -1.0f64 / 0.0f64;
-            debug_assert!(max_float.is_infinite());
+            let max_int = IntType::min_value();
+            let max_float = FloatType::min_value();
+            let mut max_int = max_int.as_ref();
+            let mut max_float = max_float.as_ref();
 
-            for argument in arguments {
+            for argument in &arguments {
                 if let Value::Float(float) = argument {
-                    max_float = max_float.max(float);
+                    max_float = max_float.map(|this|this.max(float));
                 } else if let Value::Int(int) = argument {
-                    max_int = max_int.max(int);
+                    max_int = max_int.map(|this|this.max(int));
                 } else {
-                    return Err(EvalexprError::expected_number(argument));
+                    return Err(EvalexprError::expected_number(argument.clone()));
                 }
             }
 
-            if (max_int as FloatType) > max_float {
-                Ok(Value::Int(max_int))
+            if let (Some(max_int), Some(max_float)) = (max_int, max_float) {
+                if &max_int.as_float() > max_float {
+                    Ok(Value::Int(max_int.clone()))
+                } else {
+                    Ok(Value::Float(max_float.clone()))
+                }
+            } else if let Some(max_int) = max_int {
+                Ok(Value::Int(max_int.clone()))
+            } else if let Some(max_float) = max_float {
+                Ok(Value::Float(max_float.clone()))
             } else {
-                Ok(Value::Float(max_float))
+                Err(EvalexprError::NoMinValue)
             }
         })),
         "if" => Some(Function::new(|argument| {
@@ -150,9 +170,9 @@ pub fn builtin_function(identifier: &str) -> Option<Function> {
         })),
         "len" => Some(Function::new(|argument| {
             if let Ok(subject) = argument.as_string() {
-                Ok(Value::from(subject.len() as i64))
+                Ok(Value::int(IntType::from_usize_lossy(subject.len())))
             } else if let Ok(subject) = argument.as_tuple() {
-                Ok(Value::from(subject.len() as i64))
+                Ok(Value::int(IntType::from_usize_lossy(subject.len())))
             } else {
                 Err(EvalexprError::type_error(
                     argument.clone(),
@@ -210,13 +230,16 @@ pub fn builtin_function(identifier: &str) -> Option<Function> {
         #[cfg(feature = "rand")]
         "random" => Some(Function::new(|argument| {
             argument.as_empty()?;
-            Ok(Value::Float(rand::random()))
+            let min_value = FloatType::min_value().ok_or(EvalexprError::NoMinValue)?;
+            let max_value = FloatType::max_value().ok_or(EvalexprError::NoMaxValue)?;
+            let uniform = rand::distributions::Uniform::new_inclusive(min_value, max_value);
+            Ok(Value::Float(rand::distributions::Distribution::sample(&uniform, &mut rand::thread_rng())))
         })),
         // Bitwise operators
         "bitand" => int_function!(bitand, 2),
         "bitor" => int_function!(bitor, 2),
         "bitxor" => int_function!(bitxor, 2),
-        "bitnot" => int_function!(not),
+        "bitnot" => int_function!(bitnot),
         "shl" => int_function!(shl, 2),
         "shr" => int_function!(shr, 2),
         _ => None,

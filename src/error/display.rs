@@ -1,9 +1,9 @@
-use std::fmt;
+use std::fmt::{Debug, Display, Formatter};
 
-use crate::EvalexprError;
+use crate::{EvalexprError, Operator, Value};
 
-impl fmt::Display for EvalexprError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+impl<IntType: Display, FloatType: Display> Display for EvalexprError<IntType, FloatType> where Value<IntType, FloatType>: Debug, Operator<IntType, FloatType>: Debug {
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         use crate::EvalexprError::*;
         match self {
             WrongOperatorArgumentAmount { expected, actual } => write!(
@@ -114,6 +114,8 @@ impl fmt::Display for EvalexprError {
             ),
             ContextNotMutable => write!(f, "Cannot manipulate context"),
             IllegalEscapeSequence(string) => write!(f, "Illegal escape sequence: {}", string),
+            NoMinValue => write!(f, "The integer or the floating point type has no minimum value, but this value is required by some operator or function"),
+            NoMaxValue => write!(f, "The integer or the floating point type has no maximum value, but this value is required by some operator or function"),
             CustomMessage(message) => write!(f, "Error: {}", message),
         }
     }
