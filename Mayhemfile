@@ -1,0 +1,6 @@
+project: evalexpr
+target: evalexpr-fuzz
+
+cmds:
+    - cmd: ./evalexpr-fuzz
+      libfuzzer: true
