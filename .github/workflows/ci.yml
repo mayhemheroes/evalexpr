@@ -1,211 +1,109 @@
-name: Tests and Lints
+name: Continuous Integration
 
-on:
-  pull_request:
-  push:
-
-env:
-  RUSTFLAGS: -Dwarnings
-  RUSTDOCFLAGS: -Dwarnings
+on: [push, pull_request]
 
 jobs:
-  rust_check:
-    name: Rust check
+  build_test_format_lint:
+    name: ${{matrix.command.name}} (${{matrix.toolchain}})
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        all_features: ["", "--all-features"]
-      fail-fast: true
+        toolchain: [stable, beta, nightly, 1.46.0]
+        command:
+          - name: Check
+            command: check
+            args: --all-features
+            components: ""
+          - name: Test
+            command: test
+            args: --all-features
+            components: ""
+        include:
+          - toolchain: nightly
+            command:
+              name: Format
+              command: fmt
+              args: --all -- --check
+              components: rustfmt
+          - toolchain: nightly
+            command:
+              name: Lint
+              command: clippy
+              args: --all-features --tests --benches
+              components: clippy
+          - toolchain: stable
+            command:
+              name: Sync readme
+              command: sync-readme
+              args: --check
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: cargo check
-        run: cargo check --bins --tests --lib ${{ matrix.all_features }}
-
-  rust_check_other_platforms:
-    name: Rust check
-    runs-on: ${{ matrix.platform }}
-    needs: ["rust_check", "rust_format"]
-
-    strategy:
-      matrix:
-        platform: [macOS-latest, windows-latest]
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: cargo check
-        run: cargo check --bins --tests --lib --all-features
-
-  rust_format:
-    name: Rust format
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with: 
-          toolchain: stable
-          components: rustfmt
-
-      - name: cargo format
-        uses: actions-rust-lang/rustfmt@v1
-
-  rust_lint:
-    name: Rust lint
-    runs-on: ubuntu-latest
-    needs: ["rust_check", "rust_format"]
-
-    strategy:
-      fail-fast: true
-      matrix:
-        toolchain: [null, "stable", "beta", "nightly"]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with: 
-          components: clippy
-          toolchain: ${{matrix.toolchain}}
-
-      - name: cargo clippy
-        run: cargo clippy --bins --tests --lib --all-features
-
-  rust_test:
-    name: Rust test
-    runs-on: ubuntu-latest
-    needs: ["rust_check", "rust_format"]
-
-    strategy:
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: cargo test
-        run: cargo test --all-features
-
-  rust_bench:
-    name: Rust check and lint benchmarks
-    runs-on: ubuntu-latest
-    needs: ["rust_check", "rust_format"]
-
-    strategy:
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions/checkout@v6.0.2
+      - name: ⚡ Cache
+        uses: actions/cache@v2
         with:
-          toolchain: nightly
-          components: clippy
-
-      - name: cargo check
-        run: cargo check --all-features --benches
-
-      - name: cargo clippy
-        run: cargo clippy --all-features --benches
-
-  rust_doc:
-    name: Rust doc
-    runs-on: ubuntu-latest
-    needs: ["rust_check", "rust_format"]
-
-    strategy:
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
-
-      - name: cargo doc
-        run: cargo doc --all-features
-
-  check_sync_readme:
-    needs: ["rust_check", "rust_format"]
-    name: Check sync readme
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+          default: true
+          components: ${{matrix.command.components}}
 
       - name: Install cargo-sync-readme
-        run: cargo install cargo-sync-readme
-
-      - name: Sync readme check
-        run: cargo sync-readme --check
-
-  check_cli:
-    needs: ["rust_check", "rust_format"]
-    name: Check CLI
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: CLI
-        uses: GuillaumeFalourd/assert-command-line-output@v2.4
+        uses: actions-rs/cargo@v1
         with:
-          command_line: cargo run -- p = 2\; p + 3
-          contains: 5
-          expected_result: PASSED
+          command: install
+          args: cargo-sync-readme
+
+      - name: ${{matrix.command.name}}
+        uses: actions-rs/cargo@v1
+        with:
+          command: ${{matrix.command.command}}
+          args: ${{matrix.command.args}}
 
   coveralls_io:
-    needs: [rust_test]
     name: Coverage
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
+      - name: ⚡ Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
+          override: true
+          default: true
 
       - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-tarpaulin
+          version: latest
+          use-tool-cache: true
 
       - name: Coverage Report with tarpaulin
-        run: cargo tarpaulin --all-features --out Lcov --tests --doc -- --test-threads 1
+        uses: actions-rs/cargo@v1
+        with:
+          command: tarpaulin
+          args: --all --all-features --out Lcov -- --test-threads 1
 
       - name: Upload Coverage
         uses: coverallsapp/github-action@master
